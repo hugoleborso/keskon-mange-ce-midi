@@ -2,16 +2,17 @@
 	"$schema": "https://unpkg.com/knip@latest/schema.json",
 	"entry": ["src/app/**/*.{ts,tsx}"],
 	"project": ["src/**/*.{ts,tsx}"],
-	"ignore": ["src/lib/utils.ts"],
+	"ignore": ["src/components/ui/**"],
 	"ignoreDependencies": [
-		"clsx",
-		"tailwind-merge",
+		"@base-ui/react",
+		"@testing-library/react",
 		"class-variance-authority",
 		"lucide-react",
-		"zod",
-		"@testing-library/react",
+		"postcss",
+		"shadcn",
 		"tailwindcss",
-		"postcss"
+		"tw-animate-css",
+		"zod"
 	],
 	"ignoreBinaries": ["drizzle-kit"],
 	"next": {

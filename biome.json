@@ -38,6 +38,12 @@
 			"trailingCommas": "all"
 		}
 	},
+	"css": {
+		"parser": {
+			"cssModules": true,
+			"tailwindDirectives": true
+		}
+	},
 	"files": {
 		"includes": [
 			"**/*.ts",

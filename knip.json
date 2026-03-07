@@ -2,7 +2,7 @@
 	"$schema": "https://unpkg.com/knip@latest/schema.json",
 	"entry": ["src/app/**/*.{ts,tsx}"],
 	"project": ["src/**/*.{ts,tsx}"],
-	"ignore": ["src/components/ui/**", "src/server/db/index.ts"],
+	"ignore": ["src/components/ui/**"],
 	"ignoreDependencies": [
 		"@base-ui/react",
 		"@testing-library/react",

@@ -1,8 +1,0 @@
-{
-  "recommendations": [
-    "austenc.tailwind-docs",
-    "bradlc.vscode-tailwindcss",
-    "csstools.postcss",
-    "dbaeumer.vscode-eslint"
-  ]
-}

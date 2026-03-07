@@ -1,5 +1,0 @@
-export enum Diet {
-  VEGETARIAN = "VEGETARIAN",
-  MEATLOVER = "MEATLOVER",
-  MIXED = "MIXED",
-}

@@ -1,0 +1,20 @@
+{
+	"$schema": "https://unpkg.com/knip@latest/schema.json",
+	"entry": ["src/app/**/*.{ts,tsx}"],
+	"project": ["src/**/*.{ts,tsx}"],
+	"ignore": ["src/lib/utils.ts"],
+	"ignoreDependencies": [
+		"clsx",
+		"tailwind-merge",
+		"class-variance-authority",
+		"lucide-react",
+		"zod",
+		"@testing-library/react",
+		"tailwindcss",
+		"postcss"
+	],
+	"ignoreBinaries": ["drizzle-kit"],
+	"next": {
+		"entry": ["src/app/**/*.{ts,tsx}", "next.config.ts"]
+	}
+}

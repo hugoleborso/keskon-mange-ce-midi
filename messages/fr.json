@@ -2,5 +2,8 @@
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"app_title": "Keskon mange ?",
 	"app_description": "On mange ou ce midi ?",
-	"home_coming_soon": "Bientot disponible."
+	"home_coming_soon": "Bientot disponible.",
+	"login_subtitle": "Connecte-toi pour decouvrir ou manger ce midi",
+	"login_with_google": "Se connecter avec Google",
+	"header_sign_out": "Se deconnecter"
 }

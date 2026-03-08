@@ -5,5 +5,22 @@
 	"home_coming_soon": "Bientot disponible.",
 	"login_subtitle": "Connecte-toi pour decouvrir ou manger ce midi",
 	"login_with_google": "Se connecter avec Google",
-	"header_sign_out": "Se deconnecter"
+	"header_sign_out": "Se deconnecter",
+	"restaurants_add": "Ajouter un restaurant",
+	"restaurants_empty": "Aucun restaurant pour le moment.",
+	"restaurants_empty_cta": "Sois le premier a en ajouter un !",
+	"restaurant_name": "Nom",
+	"restaurant_address": "Adresse",
+	"restaurant_type": "Type de cuisine",
+	"restaurant_labels": "Labels",
+	"restaurant_price_range": "Gamme de prix",
+	"restaurant_dine_in": "Sur place",
+	"restaurant_take_away": "A emporter",
+	"restaurant_save": "Enregistrer",
+	"restaurant_edit": "Modifier",
+	"restaurant_created_by": "Ajoute par {name}",
+	"restaurant_reviews": "{count} avis",
+	"restaurant_no_reviews": "Aucun avis",
+	"restaurant_not_found": "Restaurant introuvable",
+	"restaurant_back_to_list": "Retour a la liste"
 }

@@ -21,6 +21,12 @@ if ! pnpm exec tsc --noEmit; then
   exit 2
 fi
 
+echo "Pre-commit: Running tests with coverage..." >&2
+if ! pnpm test:coverage; then
+  echo "BLOCKED: Tests failed or coverage thresholds not met." >&2
+  exit 2
+fi
+
 echo "Pre-commit: Running knip..." >&2
 if ! pnpm exec knip; then
   echo "BLOCKED: Dead code detected. Clean up before committing." >&2

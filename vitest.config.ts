@@ -11,15 +11,13 @@ export default defineConfig({
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "json", "html"],
-			include: ["src/**/*.{ts,tsx}"],
-			exclude: [
-				"src/paraglide/**",
-				"src/app/**/layout.tsx",
-				"src/app/**/loading.tsx",
-				"src/app/**/error.tsx",
-				"src/components/ui/**",
-				"src/test/**",
+			include: [
+				"src/lib/**/*.ts",
+				"src/server/actions/**/*.ts",
+				"src/server/queries/**/*.ts",
+				"src/hooks/**/*.ts",
 			],
+			exclude: ["src/**/*.test.ts"],
 			thresholds: { lines: 100, functions: 100, branches: 100, statements: 100 },
 		},
 	},

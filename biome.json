@@ -55,7 +55,8 @@
 			"!.next",
 			"!.claude/settings.local.json",
 			"!src/paraglide",
-			"!project.inlang"
+			"!project.inlang",
+			"!coverage"
 		]
 	}
 }

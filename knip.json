@@ -11,8 +11,7 @@
 		"postcss",
 		"shadcn",
 		"tailwindcss",
-		"tw-animate-css",
-		"zod"
+		"tw-animate-css"
 	],
 	"ignoreBinaries": [],
 	"next": {

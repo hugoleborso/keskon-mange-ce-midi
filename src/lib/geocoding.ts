@@ -4,7 +4,7 @@ interface NominatimResult {
 	display_name: string;
 }
 
-export interface GeocodingResult {
+interface GeocodingResult {
 	latitude: number;
 	longitude: number;
 	displayName: string;

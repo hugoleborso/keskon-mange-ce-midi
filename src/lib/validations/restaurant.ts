@@ -15,6 +15,3 @@ export const updateRestaurantSchema = createRestaurantSchema.extend({
 	id: z.string().uuid(),
 	status: z.enum(RESTAURANT_STATUSES).optional(),
 });
-
-export type CreateRestaurantInput = z.infer<typeof createRestaurantSchema>;
-export type UpdateRestaurantInput = z.infer<typeof updateRestaurantSchema>;

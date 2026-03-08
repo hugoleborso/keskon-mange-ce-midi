@@ -1,4 +1,4 @@
-import { and, avg, count, eq, ilike, inArray, sql } from "drizzle-orm";
+import { and, avg, count, eq, inArray } from "drizzle-orm";
 import type { PriceRange } from "@/lib/constants";
 import { db } from "../db";
 import { restaurants, reviews } from "../db/schema";
@@ -74,17 +74,4 @@ export async function getRestaurantById(id: string): Promise<RestaurantWithRatin
 		averageRating: row.averageRating ?? null,
 		reviewsCount: row.reviewsCount ?? 0,
 	};
-}
-
-export async function findPotentialDuplicates(name: string, excludeId?: string) {
-	const conditions = [ilike(restaurants.name, `%${name}%`)];
-	if (excludeId) {
-		conditions.push(sql`${restaurants.id} != ${excludeId}`);
-	}
-
-	return db
-		.select({ id: restaurants.id, name: restaurants.name, address: restaurants.address })
-		.from(restaurants)
-		.where(and(...conditions))
-		.limit(5);
 }

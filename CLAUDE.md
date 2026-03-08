@@ -1,7 +1,7 @@
 # Keskon Mange
 
 ## Project
-Collaborative restaurant picker MVP. Next.js 15 App Router + Drizzle + Neon + Auth.js + React Leaflet.
+Collaborative restaurant picker MVP. Next.js 15 App Router + Drizzle + PostgreSQL + Auth.js + React Leaflet.
 
 ## Commands
 - `pnpm dev` - Dev server (http://localhost:3000)
@@ -17,6 +17,8 @@ Collaborative restaurant picker MVP. Next.js 15 App Router + Drizzle + Neon + Au
 - `pnpm test:coverage` - Vitest with coverage report
 - `pnpm test:e2e` - Playwright E2E tests
 - `pnpm knip` - Dead code detection
+- `pnpm db:up` - Start local PostgreSQL (Docker)
+- `pnpm db:down` - Stop local PostgreSQL
 - `pnpm db:generate` - Generate Drizzle migration files
 - `pnpm db:migrate` - Apply migrations (ASK USER)
 - `pnpm db:push` - Push schema directly (dev only, ASK USER)

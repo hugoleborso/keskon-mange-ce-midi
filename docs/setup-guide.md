@@ -6,6 +6,7 @@ Complete guide to deploy Keskon Mange from scratch.
 
 - Node.js 22 (use `fnm install 22`)
 - pnpm (`corepack enable && corepack prepare pnpm@latest --activate`)
+- Docker (for the local PostgreSQL database)
 - A GitHub account
 - A Google account (for OAuth)
 
@@ -18,22 +19,24 @@ fnm use 22
 pnpm install
 ```
 
-## 2. Neon PostgreSQL (Free Tier)
+## 2. Local Database (Docker)
 
-The database. Free tier: 100 compute-hours/month, 0.5 GB storage. No credit card required.
+The app uses PostgreSQL. For local development, a Docker Compose file is included.
 
-1. Go to [neon.tech](https://neon.tech) and sign up
-2. Click **New Project**
-3. Choose a name (e.g. `keskon-mange`) and region closest to your users
-4. A default database (`neondb`) and role are auto-created
-5. Copy the connection string from the dashboard — it looks like:
-   ```
-   postgresql://username:password@ep-xyz-123.us-east-2.aws.neon.tech/neondb?sslmode=require
-   ```
-6. Add to `.env.local`:
-   ```
-   DATABASE_URL="postgresql://username:password@ep-xyz-123.us-east-2.aws.neon.tech/neondb?sslmode=require"
-   ```
+### Start the database
+
+```bash
+pnpm db:up
+```
+
+This starts a PostgreSQL 17 container on port 5432 with persistent data.
+
+### Connection string
+
+Add to `.env.local`:
+```
+DATABASE_URL="postgresql://keskonmange:keskonmange@localhost:5432/keskonmange"
+```
 
 ### Push the schema
 
@@ -41,7 +44,27 @@ The database. Free tier: 100 compute-hours/month, 0.5 GB storage. No credit card
 pnpm db:push
 ```
 
-This creates all the tables (users, accounts, sessions, restaurants, reviews, favorites) directly in your Neon database.
+This creates all the tables (users, accounts, sessions, restaurants, reviews, favorites) in your local database.
+
+### Other database commands
+
+```bash
+pnpm db:down       # Stop the database container
+pnpm db:studio     # Open Drizzle Studio (visual DB browser)
+```
+
+### Production database (Neon)
+
+For production on Vercel, use [Neon PostgreSQL](https://neon.tech) (free tier: 0.5 GB storage, 100 compute-hours/month):
+
+1. Sign up at [neon.tech](https://neon.tech)
+2. Create a project (e.g. `keskon-mange`)
+3. Copy the connection string from the dashboard:
+   ```
+   postgresql://username:password@ep-xyz-123.us-east-2.aws.neon.tech/neondb?sslmode=require
+   ```
+4. Add it as `DATABASE_URL` in Vercel environment variables
+5. Push the schema: `DATABASE_URL="your-neon-url" pnpm db:push`
 
 ## 3. Google OAuth Credentials
 
@@ -103,8 +126,8 @@ Used for restaurant/review photo uploads. Free tier: 250 MB storage.
 
 Your final `.env.local` should look like:
 ```bash
-# Database
-DATABASE_URL="postgresql://user:pass@ep-xyz.us-east-2.aws.neon.tech/neondb?sslmode=require"
+# Database (local Docker)
+DATABASE_URL="postgresql://keskonmange:keskonmange@localhost:5432/keskonmange"
 
 # Auth
 AUTH_SECRET="openssl-generated-secret"
@@ -118,7 +141,9 @@ BLOB_READ_WRITE_TOKEN="vercel_blob_rw_xxxxx"
 ## 7. Run Locally
 
 ```bash
-pnpm dev
+pnpm db:up     # Start PostgreSQL
+pnpm db:push   # Create tables (first time only)
+pnpm dev       # Start dev server
 ```
 
 Open [http://localhost:3000](http://localhost:3000). You should be redirected to the login page.
@@ -139,9 +164,9 @@ After deployment:
 
 ## 9. Push Database Schema (Production)
 
-After first deploy, push the schema to your production database:
+After first deploy, push the schema to your Neon production database:
 ```bash
-DATABASE_URL="your-prod-connection-string" pnpm db:push
+DATABASE_URL="your-neon-connection-string" pnpm db:push
 ```
 
 Or use `pnpm db:migrate` if you have generated migration files.
@@ -165,8 +190,11 @@ For CI and the Claude Code integration, add these secrets in **GitHub > Settings
 
 ## Troubleshooting
 
-### "No database connection string was provided to neon()"
-You're missing `DATABASE_URL` in your `.env.local`. See step 2.
+### "ECONNREFUSED 127.0.0.1:5432"
+Your local PostgreSQL isn't running. Run `pnpm db:up` to start the Docker container.
+
+### "relation does not exist"
+Tables haven't been created yet. Run `pnpm db:push` to push the schema.
 
 ### "Error: OAuthCallbackError" on Google sign-in
 Your redirect URI doesn't match. Check that the URI in Google Cloud Console exactly matches `http://localhost:3000/api/auth/callback/google`.

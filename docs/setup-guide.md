@@ -51,6 +51,8 @@ This creates all the tables (users, accounts, sessions, restaurants, reviews, fa
 ```bash
 pnpm db:down       # Stop the database container
 pnpm db:studio     # Open Drizzle Studio (visual DB browser)
+pnpm db:generate   # Generate migration files from schema changes
+pnpm db:migrate    # Apply generated migrations
 ```
 
 ### Production database (Neon)
@@ -134,6 +136,9 @@ AUTH_SECRET="openssl-generated-secret"
 AUTH_GOOGLE_ID="123456789.apps.googleusercontent.com"
 AUTH_GOOGLE_SECRET="GOCSPX-xxxxx"
 
+# Auth URL (set to your Vercel URL in production)
+# AUTH_URL="https://your-project.vercel.app"
+
 # Image storage (optional)
 BLOB_READ_WRITE_TOKEN="vercel_blob_rw_xxxxx"
 ```
@@ -148,7 +153,20 @@ pnpm dev       # Start dev server
 
 Open [http://localhost:3000](http://localhost:3000). You should be redirected to the login page.
 
-## 8. Deploy to Vercel
+## 8. Quality Checks
+
+Run these before committing:
+
+```bash
+pnpm check          # Biome lint + format
+pnpm typecheck      # TypeScript type check
+pnpm test           # Vitest unit tests (84 tests)
+pnpm test:coverage  # Tests with 100% coverage report
+pnpm knip           # Dead code detection
+pnpm build          # Production build
+```
+
+## 9. Deploy to Vercel
 
 1. Go to [vercel.com](https://vercel.com) and sign in
 2. Click **Add New > Project**
@@ -162,7 +180,7 @@ After deployment:
 - Add the Vercel URL to Google OAuth redirect URIs (step 3.6 above)
 - Every PR will automatically get a **preview deployment** with its own URL
 
-## 9. Push Database Schema (Production)
+## 10. Push Database Schema (Production)
 
 After first deploy, push the schema to your Neon production database:
 ```bash
@@ -204,3 +222,6 @@ Add `AUTH_SECRET` to your environment. In Vercel, make sure it's set for all env
 
 ### Knip/Biome/TypeScript errors
 Run `pnpm check:fix` to auto-fix formatting, then `pnpm typecheck` to see type errors.
+
+### Leaflet map not showing
+Make sure `leaflet/dist/leaflet.css` is imported in `src/app/globals.css`. The import is already included.

@@ -1,5 +1,22 @@
 # Keskon Mange - Full Rework Plan
 
+## Completion Status
+
+| Epic | Status |
+|------|--------|
+| Epic 0 — Tooling & Setup | ✅ Done |
+| Epic 0.5 — ADRs | ✅ Done |
+| Epic 1 — Database + Auth | ✅ Done |
+| Epic 2 — Restaurant CRUD | ✅ Done |
+| Epic 3 — Map Integration | ✅ Done |
+| Epic 4 — Reviews | ✅ Done |
+| Epic 5 — Filters & Favorites | ✅ Done |
+| Epic 6 — Random Draw | ✅ Done |
+| Epic 7 — Polish & Accessibility | ✅ Done |
+| Epic 8 — DevOps, Slack & Docs | 🔲 Not started |
+
+---
+
 ## Context
 
 The current app is a minimal Next.js 13.4 single-page app that picks a random restaurant from a Google Sheets data source. It has no auth, no database usage (Prisma schema exists but is unused), no map, no reviews, no tests, no CI/CD, and no i18n. The codebase uses ESLint + Prettier.

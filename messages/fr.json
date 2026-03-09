@@ -40,5 +40,11 @@
 	"draw_result_label": "On va manger chez...",
 	"draw_view_restaurant": "Voir la fiche",
 	"draw_retry": "Relancer !",
-	"draw_empty": "Aucun resto ne matche les filtres. Change tes criteres !"
+	"draw_empty": "Aucun resto ne matche les filtres. Change tes criteres !",
+	"error_title": "Oups, ca a plante !",
+	"error_description": "Quelque chose s'est mal passe. Reessaie, ca devrait passer.",
+	"error_retry": "Reessayer",
+	"not_found_title": "404 - Page introuvable",
+	"not_found_description": "Cette page n'existe pas... mais y'a plein de restos qui existent !",
+	"not_found_go_home": "Retour a l'accueil"
 }

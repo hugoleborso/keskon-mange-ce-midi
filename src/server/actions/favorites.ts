@@ -19,9 +19,7 @@ export async function toggleFavorite(restaurantId: string) {
 	if (existing.length > 0) {
 		await db
 			.delete(favorites)
-			.where(
-				and(eq(favorites.userId, session.user.id), eq(favorites.restaurantId, restaurantId)),
-			);
+			.where(and(eq(favorites.userId, session.user.id), eq(favorites.restaurantId, restaurantId)));
 	} else {
 		await db.insert(favorites).values({
 			userId: session.user.id,

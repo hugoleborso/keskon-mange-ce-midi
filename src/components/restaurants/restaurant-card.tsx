@@ -1,22 +1,32 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 
-export function RestaurantCard({ restaurant }: { restaurant: RestaurantWithRating }) {
+export function RestaurantCard({
+	restaurant,
+	favoriteButton,
+}: {
+	restaurant: RestaurantWithRating;
+	favoriteButton?: ReactNode;
+}) {
 	return (
 		<Link
 			href={`/restaurants/${restaurant.id}`}
 			className="block rounded-lg border p-4 transition-colors hover:bg-muted/50"
 		>
 			<div className="flex items-start justify-between">
-				<div>
+				<div className="flex-1">
 					<h3 className="font-semibold">{restaurant.name}</h3>
 					<p className="text-sm text-muted-foreground">{restaurant.address}</p>
 				</div>
-				{restaurant.priceRange && (
-					<span className="text-sm font-medium">{PRICE_RANGE_LABELS[restaurant.priceRange]}</span>
-				)}
+				<div className="flex items-center gap-2">
+					{restaurant.priceRange && (
+						<span className="text-sm font-medium">{PRICE_RANGE_LABELS[restaurant.priceRange]}</span>
+					)}
+					{favoriteButton}
+				</div>
 			</div>
 			<div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
 				{restaurant.restaurantType && (

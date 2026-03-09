@@ -1,9 +1,16 @@
 import Link from "next/link";
+import { FavoriteButton } from "@/components/favorites/favorite-button";
 import * as m from "@/paraglide/messages.js";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { RestaurantCard } from "./restaurant-card";
 
-export function RestaurantList({ restaurants }: { restaurants: RestaurantWithRating[] }) {
+export function RestaurantList({
+	restaurants,
+	favoriteIds = [],
+}: {
+	restaurants: RestaurantWithRating[];
+	favoriteIds?: string[];
+}) {
 	if (restaurants.length === 0) {
 		return (
 			<div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -18,7 +25,16 @@ export function RestaurantList({ restaurants }: { restaurants: RestaurantWithRat
 	return (
 		<div className="grid gap-3">
 			{restaurants.map((restaurant) => (
-				<RestaurantCard key={restaurant.id} restaurant={restaurant} />
+				<RestaurantCard
+					key={restaurant.id}
+					restaurant={restaurant}
+					favoriteButton={
+						<FavoriteButton
+							restaurantId={restaurant.id}
+							isFavorite={favoriteIds.includes(restaurant.id)}
+						/>
+					}
+				/>
 			))}
 		</div>
 	);

@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockOrderBy = vi.fn();
-const mockLimit = vi.fn();
 const mockWhere = vi.fn();
 
 // Chain mock for getUserFavoriteRestaurants (complex join query)
@@ -94,7 +92,9 @@ describe("isFavorite", () => {
 	});
 
 	it("returns true when favorite exists", async () => {
-		mockWhere.mockReturnValueOnce({ limit: vi.fn().mockResolvedValueOnce([{ restaurantId: "r1" }]) });
+		mockWhere.mockReturnValueOnce({
+			limit: vi.fn().mockResolvedValueOnce([{ restaurantId: "r1" }]),
+		});
 
 		const result = await isFavorite("user-1", "r1");
 		expect(result).toBe(true);

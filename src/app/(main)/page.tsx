@@ -5,6 +5,8 @@ import { RestaurantList } from "@/components/restaurants/restaurant-list";
 import type { PriceRange } from "@/lib/constants";
 import { PRICE_RANGES } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
+import { auth } from "@/server/auth";
+import { getUserFavorites } from "@/server/queries/favorites";
 import { getRestaurants } from "@/server/queries/restaurants";
 
 function parsePriceRange(value: string | string[] | undefined): PriceRange[] {
@@ -26,11 +28,16 @@ export default async function HomePage({
 		priceRange: parsePriceRange(params.priceRange),
 	};
 
-	const restaurants = await getRestaurants({
-		dineIn: filters.dineIn,
-		takeAway: filters.takeAway,
-		priceRange: filters.priceRange.length > 0 ? filters.priceRange : undefined,
-	});
+	const [restaurants, session] = await Promise.all([
+		getRestaurants({
+			dineIn: filters.dineIn,
+			takeAway: filters.takeAway,
+			priceRange: filters.priceRange.length > 0 ? filters.priceRange : undefined,
+		}),
+		auth(),
+	]);
+
+	const favoriteIds = session?.user?.id ? await getUserFavorites(session.user.id) : [];
 
 	return (
 		<main className="flex h-[calc(100vh-57px)] flex-col lg:flex-row">
@@ -50,7 +57,7 @@ export default async function HomePage({
 				<div className="mb-4">
 					<FilterBar />
 				</div>
-				<RestaurantList restaurants={restaurants} />
+				<RestaurantList restaurants={restaurants} favoriteIds={favoriteIds} />
 			</div>
 		</main>
 	);

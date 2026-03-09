@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import * as m from "@/paraglide/messages.js";
 import { auth, signOut } from "@/server/auth";
+import { SubmitButton } from "../ui/submit-button";
 
 export async function Header() {
 	const session = await auth();
@@ -35,9 +36,9 @@ export async function Header() {
 						await signOut();
 					}}
 				>
-					<button type="submit" className="text-sm text-muted-foreground hover:underline">
+					<SubmitButton className="text-sm text-muted-foreground hover:underline">
 						{m.header_sign_out()}
-					</button>
+					</SubmitButton>
 				</form>
 			</div>
 		</header>

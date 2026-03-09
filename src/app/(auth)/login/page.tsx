@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/submit-button";
 import * as m from "@/paraglide/messages.js";
 import { signIn } from "@/server/auth";
 
@@ -12,12 +13,9 @@ export default function LoginPage() {
 					await signIn("google", { redirectTo: "/" });
 				}}
 			>
-				<button
-					type="submit"
-					className="rounded-lg bg-primary px-6 py-3 text-primary-foreground hover:bg-primary/90"
-				>
+				<SubmitButton className="rounded-lg bg-primary px-6 py-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
 					{m.login_with_google()}
-				</button>
+				</SubmitButton>
 			</form>
 		</main>
 	);

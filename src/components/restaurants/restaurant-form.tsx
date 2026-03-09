@@ -1,6 +1,7 @@
 import { LABELS, PRICE_RANGE_LABELS, PRICE_RANGES, RESTAURANT_TYPES } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
+import { SubmitButton } from "../ui/submit-button";
 
 export function RestaurantForm({
 	action,
@@ -107,12 +108,9 @@ export function RestaurantForm({
 				</label>
 			</div>
 
-			<button
-				type="submit"
-				className="rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
-			>
+			<SubmitButton className="rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
 				{m.restaurant_save()}
-			</button>
+			</SubmitButton>
 		</form>
 	);
 }

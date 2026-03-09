@@ -3,6 +3,7 @@
 import { useState } from "react";
 import * as m from "@/paraglide/messages.js";
 import { createReview, updateReview } from "@/server/actions/reviews";
+import { SubmitButton } from "../ui/submit-button";
 import { StarRating } from "./star-rating";
 
 export function ReviewForm({
@@ -38,13 +39,12 @@ export function ReviewForm({
 					className="w-full resize-none rounded-md border bg-background px-3 py-2 text-sm"
 				/>
 			</div>
-			<button
-				type="submit"
+			<SubmitButton
 				disabled={rating === 0}
 				className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 			>
 				{m.restaurant_save()}
-			</button>
+			</SubmitButton>
 		</form>
 	);
 }

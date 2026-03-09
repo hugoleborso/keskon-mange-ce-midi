@@ -2,6 +2,7 @@ import Image from "next/image";
 import * as m from "@/paraglide/messages.js";
 import { deleteReview } from "@/server/actions/reviews";
 import type { ReviewWithAuthor } from "@/server/queries/reviews";
+import { SubmitButton } from "../ui/submit-button";
 import { StarRating } from "./star-rating";
 
 export function ReviewList({
@@ -35,9 +36,9 @@ export function ReviewList({
 						{currentUserId === review.authorId && (
 							<form action={deleteReview}>
 								<input type="hidden" name="id" value={review.id} />
-								<button type="submit" className="text-xs text-destructive hover:underline">
+								<SubmitButton className="text-xs text-destructive hover:underline">
 									{m.review_delete()}
-								</button>
+								</SubmitButton>
 							</form>
 						)}
 					</div>

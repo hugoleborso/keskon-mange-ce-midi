@@ -1,9 +1,9 @@
 "use client";
 
-import { type ReactNode, createContext, useCallback, useRef, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
+import { createContext, type ReactNode, useCallback, useRef, useState } from "react";
 
-export type MapContextValue = {
+type MapContextValue = {
 	selectedId: string | null;
 	setSelectedId: (id: string | null) => void;
 	flyTo: (lat: number, lng: number, zoom?: number) => void;
@@ -25,8 +25,6 @@ export function MapProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	return (
-		<MapContext value={{ selectedId, setSelectedId, flyTo, registerMap }}>
-			{children}
-		</MapContext>
+		<MapContext value={{ selectedId, setSelectedId, flyTo, registerMap }}>{children}</MapContext>
 	);
 }

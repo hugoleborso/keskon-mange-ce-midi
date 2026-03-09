@@ -71,6 +71,15 @@ export default async function RestaurantDetailPage({
 					? `⭐ ${restaurant.averageRating?.toFixed(1)} · ${m.restaurant_reviews({ count: restaurant.reviewsCount })}`
 					: m.restaurant_no_reviews()}
 			</div>
+
+			{restaurant.latitude && restaurant.longitude && (
+				<Link
+					href={`/?selected=${restaurant.id}`}
+					className="mt-3 inline-block text-sm text-primary hover:underline"
+				>
+					{m.map_view_on_map()}
+				</Link>
+			)}
 		</main>
 	);
 }

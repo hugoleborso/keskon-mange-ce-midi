@@ -22,5 +22,7 @@
 	"restaurant_reviews": "{count} avis",
 	"restaurant_no_reviews": "Aucun avis",
 	"restaurant_not_found": "Restaurant introuvable",
-	"restaurant_back_to_list": "Retour a la liste"
+	"restaurant_back_to_list": "Retour a la liste",
+	"map_view_on_map": "Voir sur la carte",
+	"map_loading": "Chargement de la carte..."
 }

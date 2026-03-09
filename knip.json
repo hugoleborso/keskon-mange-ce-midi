@@ -5,7 +5,6 @@
 	"ignore": ["src/components/ui/**"],
 	"ignoreDependencies": [
 		"@base-ui/react",
-		"@testing-library/react",
 		"class-variance-authority",
 		"lucide-react",
 		"postcss",

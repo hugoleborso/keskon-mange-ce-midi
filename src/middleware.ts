@@ -1,6 +1,7 @@
-export { auth as middleware } from "@/server/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/server/auth.config";
 
-export const runtime = "nodejs";
+export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
 	matcher: ["/((?!api/auth|login|_next/static|_next/image|favicon.ico).*)"],

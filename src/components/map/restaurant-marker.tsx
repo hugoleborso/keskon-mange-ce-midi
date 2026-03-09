@@ -6,35 +6,55 @@ import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { MapPopup } from "./map-popup";
 
 function ratingColor(rating: number | null): string {
-	if (rating === null) return "#9ca3af"; // gray
-	if (rating >= 4) return "#22c55e"; // green
-	if (rating >= 3) return "#f59e0b"; // orange
-	return "#ef4444"; // red
+	if (rating === null) return "#94a3b8"; // slate-400
+	if (rating >= 4) return "#10b981"; // emerald-500
+	if (rating >= 3) return "#f59e0b"; // amber-500
+	return "#ef4444"; // red-500
 }
 
-function createIcon(rating: number | null) {
+function createIcon(rating: number | null, isSelected: boolean) {
 	const color = ratingColor(rating);
-	const label = rating !== null ? rating.toFixed(1) : "?";
+	const label = rating !== null ? rating.toFixed(1) : "—";
+	const size = isSelected ? 44 : 36;
+	const fontSize = isSelected ? 13 : 11;
+	const borderWidth = isSelected ? 3 : 2;
 
 	return L.divIcon({
 		className: "",
-		iconSize: [32, 32],
-		iconAnchor: [16, 32],
-		popupAnchor: [0, -32],
+		iconSize: [size, size + 8],
+		iconAnchor: [size / 2, size + 8],
+		popupAnchor: [0, -(size + 4)],
 		html: `<div style="
-			background: ${color};
-			color: white;
-			width: 32px;
-			height: 32px;
-			border-radius: 50% 50% 50% 0;
-			transform: rotate(-45deg);
 			display: flex;
+			flex-direction: column;
 			align-items: center;
-			justify-content: center;
-			border: 2px solid white;
-			box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+			filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
 		">
-			<span style="transform: rotate(45deg); font-size: 11px; font-weight: 600;">${label}</span>
+			<div style="
+				background: ${color};
+				color: white;
+				width: ${size}px;
+				height: ${size}px;
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: ${borderWidth}px solid white;
+				font-size: ${fontSize}px;
+				font-weight: 700;
+				font-family: system-ui, sans-serif;
+				letter-spacing: -0.02em;
+				transition: transform 0.2s ease;
+				${isSelected ? "transform: scale(1.1);" : ""}
+			">${label}</div>
+			<div style="
+				width: 0;
+				height: 0;
+				border-left: 6px solid transparent;
+				border-right: 6px solid transparent;
+				border-top: 8px solid white;
+				margin-top: -1px;
+			"></div>
 		</div>`,
 	});
 }
@@ -50,7 +70,7 @@ export function RestaurantMarker({
 }) {
 	if (!restaurant.latitude || !restaurant.longitude) return null;
 
-	const icon = createIcon(restaurant.averageRating);
+	const icon = createIcon(restaurant.averageRating, isSelected);
 
 	return (
 		<Marker

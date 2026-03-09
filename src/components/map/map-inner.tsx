@@ -7,8 +7,8 @@ import { useMapContext } from "@/hooks/use-map-context";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { RestaurantMarker } from "./restaurant-marker";
 
-const PARIS_CENTER = { lat: 48.866, lng: 2.333 };
-const DEFAULT_ZOOM = 13;
+const DEFAULT_CENTER = { lat: 48.8834, lng: 2.3244 }; // 48 boulevard des Batignolles, 75017
+const DEFAULT_ZOOM = 15; // ~1km radius
 
 export function MapInner({ restaurants }: { restaurants: RestaurantWithRating[] }) {
 	const { selectedId, setSelectedId, registerMap } = useMapContext();
@@ -33,10 +33,15 @@ export function MapInner({ restaurants }: { restaurants: RestaurantWithRating[] 
 	}, [restaurants]);
 
 	return (
-		<MapContainer center={PARIS_CENTER} zoom={DEFAULT_ZOOM} className="h-full w-full" ref={mapRef}>
+		<MapContainer
+			center={DEFAULT_CENTER}
+			zoom={DEFAULT_ZOOM}
+			className="h-full w-full"
+			ref={mapRef}
+		>
 			<TileLayer
-				attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+				attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+				url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
 			/>
 			{restaurants.map((restaurant) => (
 				<RestaurantMarker

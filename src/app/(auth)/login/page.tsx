@@ -2,6 +2,11 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import * as m from "@/paraglide/messages.js";
 import { signIn } from "@/server/auth";
 
+const previewOrigin =
+	process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL
+		? `https://${process.env.VERCEL_URL}`
+		: null;
+
 export default function LoginPage() {
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
@@ -10,7 +15,8 @@ export default function LoginPage() {
 			<form
 				action={async () => {
 					"use server";
-					await signIn("google", { redirectTo: "/" });
+					const redirectTo = previewOrigin ? `${previewOrigin}/` : "/";
+					await signIn("google", { redirectTo });
 				}}
 			>
 				<SubmitButton className="rounded-lg bg-primary px-6 py-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50">

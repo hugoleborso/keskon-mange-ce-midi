@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockWhere = vi.fn();
-
-// Chain mock for getUserFavoriteRestaurants (complex join query)
 const mockFavJoinOrderBy = vi.fn();
 
 vi.mock("../db", () => {
-	// Subquery proxy for rating stats
 	const subqueryHandler: ProxyHandler<object> = {
 		get(_target, prop: string | symbol) {
 			if (prop === "then") return undefined;
@@ -14,46 +11,23 @@ vi.mock("../db", () => {
 		},
 	};
 
-	let selectCallCount = 0;
-
 	return {
 		db: {
-			select: vi.fn(() => {
-				selectCallCount++;
-				// First call might be subquery (inside getUserFavoriteRestaurants)
-				if (selectCallCount <= 1) {
-					return {
-						from: vi.fn(() => ({
-							where: mockWhere,
-							innerJoin: vi.fn(() => ({
-								leftJoin: vi.fn(() => ({
-									where: vi.fn(() => ({
-										orderBy: mockFavJoinOrderBy,
-									})),
-								})),
+			select: vi.fn(() => ({
+				from: vi.fn(() => ({
+					where: mockWhere,
+					innerJoin: vi.fn(() => ({
+						leftJoin: vi.fn(() => ({
+							where: vi.fn(() => ({
+								orderBy: mockFavJoinOrderBy,
 							})),
-							groupBy: vi.fn(() => ({
-								as: vi.fn(() => new Proxy({}, subqueryHandler)),
-							})),
-						})),
-					};
-				}
-				return {
-					from: vi.fn(() => ({
-						where: mockWhere,
-						innerJoin: vi.fn(() => ({
-							leftJoin: vi.fn(() => ({
-								where: vi.fn(() => ({
-									orderBy: mockFavJoinOrderBy,
-								})),
-							})),
-						})),
-						groupBy: vi.fn(() => ({
-							as: vi.fn(() => new Proxy({}, subqueryHandler)),
 						})),
 					})),
-				};
-			}),
+					groupBy: vi.fn(() => ({
+						as: vi.fn(() => new Proxy({}, subqueryHandler)),
+					})),
+				})),
+			})),
 		},
 	};
 });
@@ -64,7 +38,7 @@ vi.mock("../db/schema", () => ({
 	reviews: { id: "id", restaurantId: "restaurant_id", rating: "rating" },
 }));
 
-const { getUserFavorites, isFavorite } = await import("./favorites");
+const { getUserFavorites, isFavorite, getUserFavoriteRestaurants } = await import("./favorites");
 
 describe("getUserFavorites", () => {
 	beforeEach(() => {
@@ -105,5 +79,52 @@ describe("isFavorite", () => {
 
 		const result = await isFavorite("user-1", "r1");
 		expect(result).toBe(false);
+	});
+});
+
+describe("getUserFavoriteRestaurants", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("returns restaurants with rating data", async () => {
+		const mockRow = {
+			restaurant: { id: "r1", name: "Chez Luigi" },
+			averageRating: 4.2,
+			reviewsCount: 3,
+		};
+		mockFavJoinOrderBy.mockResolvedValueOnce([mockRow]);
+
+		const result = await getUserFavoriteRestaurants("user-1");
+
+		expect(result).toEqual([
+			{
+				id: "r1",
+				name: "Chez Luigi",
+				averageRating: 4.2,
+				reviewsCount: 3,
+			},
+		]);
+	});
+
+	it("returns empty array when no favorites", async () => {
+		mockFavJoinOrderBy.mockResolvedValueOnce([]);
+
+		const result = await getUserFavoriteRestaurants("user-1");
+		expect(result).toEqual([]);
+	});
+
+	it("defaults null averageRating and 0 reviewsCount", async () => {
+		const mockRow = {
+			restaurant: { id: "r2", name: "New Place" },
+			averageRating: null,
+			reviewsCount: null,
+		};
+		mockFavJoinOrderBy.mockResolvedValueOnce([mockRow]);
+
+		const result = await getUserFavoriteRestaurants("user-1");
+
+		expect(result[0].averageRating).toBeNull();
+		expect(result[0].reviewsCount).toBe(0);
 	});
 });

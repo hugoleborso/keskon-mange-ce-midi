@@ -1,3 +1,5 @@
+"use client";
+
 import dynamic from "next/dynamic";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 

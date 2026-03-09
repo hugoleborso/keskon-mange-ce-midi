@@ -26,10 +26,10 @@ const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
 
 vi.mock("../db", () => ({
 	db: {
-		insert: (...args: unknown[]) => mockInsert(...args),
-		update: (...args: unknown[]) => mockUpdate(...args),
-		delete: (...args: unknown[]) => mockDelete(...args),
-		select: (...args: unknown[]) => mockSelect(...args),
+		insert: vi.fn(() => ({ values: mockInsertValues })),
+		update: vi.fn(() => ({ set: mockUpdateSet })),
+		delete: vi.fn(() => ({ where: mockDeleteWhere })),
+		select: vi.fn(() => ({ from: mockSelectFrom })),
 	},
 }));
 
@@ -69,9 +69,7 @@ describe("createReview", () => {
 		auth.mockResolvedValueOnce(null);
 
 		await expect(
-			createReview(
-				makeFormData({ restaurantId: validRestaurantId, rating: "4" }),
-			),
+			createReview(makeFormData({ restaurantId: validRestaurantId, rating: "4" })),
 		).rejects.toThrow("Non authentifie");
 	});
 
@@ -87,7 +85,6 @@ describe("createReview", () => {
 			}),
 		);
 
-		expect(mockInsert).toHaveBeenCalled();
 		expect(mockInsertValues).toHaveBeenCalledWith(
 			expect.objectContaining({
 				restaurantId: validRestaurantId,
@@ -117,18 +114,18 @@ describe("updateReview", () => {
 	it("throws when not authenticated", async () => {
 		auth.mockResolvedValueOnce(null);
 
-		await expect(
-			updateReview(makeFormData({ id: validUuid, rating: "5" })),
-		).rejects.toThrow("Non authentifie");
+		await expect(updateReview(makeFormData({ id: validUuid, rating: "5" }))).rejects.toThrow(
+			"Non authentifie",
+		);
 	});
 
 	it("throws when review not found", async () => {
 		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
 		mockSelectLimit.mockResolvedValueOnce([]);
 
-		await expect(
-			updateReview(makeFormData({ id: validUuid, rating: "5" })),
-		).rejects.toThrow("Avis introuvable");
+		await expect(updateReview(makeFormData({ id: validUuid, rating: "5" }))).rejects.toThrow(
+			"Avis introuvable",
+		);
 	});
 
 	it("throws when not the author", async () => {
@@ -137,9 +134,9 @@ describe("updateReview", () => {
 			{ authorId: "user-2", restaurantId: validRestaurantId },
 		]);
 
-		await expect(
-			updateReview(makeFormData({ id: validUuid, rating: "5" })),
-		).rejects.toThrow("Non autorise");
+		await expect(updateReview(makeFormData({ id: validUuid, rating: "5" }))).rejects.toThrow(
+			"Non autorise",
+		);
 	});
 
 	it("updates review on success", async () => {
@@ -149,9 +146,7 @@ describe("updateReview", () => {
 		]);
 		mockUpdateWhere.mockResolvedValueOnce(undefined);
 
-		await updateReview(
-			makeFormData({ id: validUuid, rating: "5", comment: "Updated" }),
-		);
+		await updateReview(makeFormData({ id: validUuid, rating: "5", comment: "Updated" }));
 
 		expect(mockUpdateSet).toHaveBeenCalledWith(
 			expect.objectContaining({ rating: 5, comment: "Updated" }),
@@ -168,18 +163,14 @@ describe("deleteReview", () => {
 	it("throws when not authenticated", async () => {
 		auth.mockResolvedValueOnce(null);
 
-		await expect(deleteReview(makeFormData({ id: validUuid }))).rejects.toThrow(
-			"Non authentifie",
-		);
+		await expect(deleteReview(makeFormData({ id: validUuid }))).rejects.toThrow("Non authentifie");
 	});
 
 	it("throws when review not found", async () => {
 		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
 		mockSelectLimit.mockResolvedValueOnce([]);
 
-		await expect(deleteReview(makeFormData({ id: validUuid }))).rejects.toThrow(
-			"Avis introuvable",
-		);
+		await expect(deleteReview(makeFormData({ id: validUuid }))).rejects.toThrow("Avis introuvable");
 	});
 
 	it("throws when not the author", async () => {
@@ -188,9 +179,7 @@ describe("deleteReview", () => {
 			{ authorId: "user-2", restaurantId: validRestaurantId },
 		]);
 
-		await expect(deleteReview(makeFormData({ id: validUuid }))).rejects.toThrow(
-			"Non autorise",
-		);
+		await expect(deleteReview(makeFormData({ id: validUuid }))).rejects.toThrow("Non autorise");
 	});
 
 	it("deletes review on success", async () => {
@@ -202,7 +191,7 @@ describe("deleteReview", () => {
 
 		await deleteReview(makeFormData({ id: validUuid }));
 
-		expect(mockDelete).toHaveBeenCalled();
+		expect(mockDeleteWhere).toHaveBeenCalled();
 		expect(revalidatePath).toHaveBeenCalledWith(`/restaurants/${validRestaurantId}`);
 		expect(revalidatePath).toHaveBeenCalledWith("/");
 	});

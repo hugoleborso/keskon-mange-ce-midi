@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ReviewForm } from "@/components/reviews/review-form";
+import { ReviewList } from "@/components/reviews/review-list";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
+import { auth } from "@/server/auth";
 import { getRestaurantById } from "@/server/queries/restaurants";
+import { getReviewsByRestaurant, getUserReview } from "@/server/queries/reviews";
 
 export default async function RestaurantDetailPage({
 	params,
@@ -10,9 +14,14 @@ export default async function RestaurantDetailPage({
 	params: Promise<{ id: string }>;
 }) {
 	const { id } = await params;
-	const restaurant = await getRestaurantById(id);
+	const [restaurant, session] = await Promise.all([getRestaurantById(id), auth()]);
 
 	if (!restaurant) notFound();
+
+	const [reviews, userReview] = await Promise.all([
+		getReviewsByRestaurant(id),
+		session?.user?.id ? getUserReview(id, session.user.id) : null,
+	]);
 
 	return (
 		<main className="mx-auto max-w-2xl p-4">
@@ -80,6 +89,16 @@ export default async function RestaurantDetailPage({
 					{m.map_view_on_map()}
 				</Link>
 			)}
+
+			<section className="mt-8">
+				<h2 className="mb-4 text-lg font-semibold">{m.review_section_title()}</h2>
+				{session?.user && (
+					<div className="mb-6">
+						<ReviewForm restaurantId={id} existingReview={userReview} />
+					</div>
+				)}
+				<ReviewList reviews={reviews} currentUserId={session?.user?.id} />
+			</section>
 		</main>
 	);
 }

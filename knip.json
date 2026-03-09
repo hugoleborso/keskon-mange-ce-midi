@@ -6,7 +6,6 @@
 	"ignoreDependencies": [
 		"@base-ui/react",
 		"class-variance-authority",
-		"lucide-react",
 		"postcss",
 		"shadcn",
 		"tailwindcss",

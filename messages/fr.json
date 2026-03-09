@@ -24,5 +24,12 @@
 	"restaurant_not_found": "Restaurant introuvable",
 	"restaurant_back_to_list": "Retour a la liste",
 	"map_view_on_map": "Voir sur la carte",
-	"map_loading": "Chargement de la carte..."
+	"map_loading": "Chargement de la carte...",
+	"review_add": "Ajouter un avis",
+	"review_edit": "Modifier mon avis",
+	"review_delete": "Supprimer",
+	"review_rating": "Note",
+	"review_comment_placeholder": "Un commentaire ? (facultatif)",
+	"review_empty": "Aucun avis pour le moment. Sois le premier !",
+	"review_section_title": "Avis"
 }

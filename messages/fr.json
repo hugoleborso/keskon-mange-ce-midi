@@ -31,5 +31,9 @@
 	"review_rating": "Note",
 	"review_comment_placeholder": "Un commentaire ? (facultatif)",
 	"review_empty": "Aucun avis pour le moment. Sois le premier !",
-	"review_section_title": "Avis"
+	"review_section_title": "Avis",
+	"filters_reset": "Reinitialiser",
+	"favorites_title": "Mes favoris",
+	"favorites_empty": "Aucun favori pour le moment.",
+	"favorites_empty_cta": "Ajoute des restos en favoris pour les retrouver ici !"
 }

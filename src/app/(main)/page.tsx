@@ -1,11 +1,36 @@
 import Link from "next/link";
+import { FilterBar } from "@/components/filters/filter-bar";
 import { RestaurantMap } from "@/components/map/restaurant-map";
 import { RestaurantList } from "@/components/restaurants/restaurant-list";
+import type { PriceRange } from "@/lib/constants";
+import { PRICE_RANGES } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import { getRestaurants } from "@/server/queries/restaurants";
 
-export default async function HomePage() {
-	const restaurants = await getRestaurants();
+function parsePriceRange(value: string | string[] | undefined): PriceRange[] {
+	if (!value) return [];
+	const values = Array.isArray(value) ? value : value.split(",");
+	return values.filter((v): v is PriceRange => (PRICE_RANGES as readonly string[]).includes(v));
+}
+
+export default async function HomePage({
+	searchParams,
+}: {
+	searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+	const params = await searchParams;
+
+	const filters = {
+		dineIn: params.dineIn === "true" ? true : undefined,
+		takeAway: params.takeAway === "true" ? true : undefined,
+		priceRange: parsePriceRange(params.priceRange),
+	};
+
+	const restaurants = await getRestaurants({
+		dineIn: filters.dineIn,
+		takeAway: filters.takeAway,
+		priceRange: filters.priceRange.length > 0 ? filters.priceRange : undefined,
+	});
 
 	return (
 		<main className="flex h-[calc(100vh-57px)] flex-col lg:flex-row">
@@ -21,6 +46,9 @@ export default async function HomePage() {
 					>
 						{m.restaurants_add()}
 					</Link>
+				</div>
+				<div className="mb-4">
+					<FilterBar />
 				</div>
 				<RestaurantList restaurants={restaurants} />
 			</div>

@@ -10,19 +10,15 @@ vi.mock("../auth", () => ({
 
 // Mock db with chainable builders
 const mockInsertValues = vi.fn();
-const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
 
 const mockUpdateWhere = vi.fn();
 const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }));
-const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }));
 
 const mockDeleteWhere = vi.fn();
-const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }));
 
 const mockSelectLimit = vi.fn();
 const mockSelectWhere = vi.fn(() => ({ limit: mockSelectLimit }));
 const mockSelectFrom = vi.fn(() => ({ where: mockSelectWhere }));
-const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
 
 vi.mock("../db", () => ({
 	db: {

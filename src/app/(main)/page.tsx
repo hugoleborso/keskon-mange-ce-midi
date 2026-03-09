@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { RestaurantMap } from "@/components/map/restaurant-map";
+import { DrawContainer } from "@/components/random-draw/draw-container";
 import { RestaurantList } from "@/components/restaurants/restaurant-list";
 import type { PriceRange } from "@/lib/constants";
 import { PRICE_RANGES } from "@/lib/constants";
@@ -58,6 +59,9 @@ export default async function HomePage({
 					<FilterBar />
 				</div>
 				<RestaurantList restaurants={restaurants} favoriteIds={favoriteIds} />
+				<div className="sticky bottom-0 mt-4 bg-background pb-4 pt-2">
+					<DrawContainer restaurants={restaurants} />
+				</div>
 			</div>
 		</main>
 	);

@@ -35,5 +35,10 @@
 	"filters_reset": "Reinitialiser",
 	"favorites_title": "Mes favoris",
 	"favorites_empty": "Aucun favori pour le moment.",
-	"favorites_empty_cta": "Ajoute des restos en favoris pour les retrouver ici !"
+	"favorites_empty_cta": "Ajoute des restos en favoris pour les retrouver ici !",
+	"draw_button": "Keskon mange ?!",
+	"draw_result_label": "On va manger chez...",
+	"draw_view_restaurant": "Voir la fiche",
+	"draw_retry": "Relancer !",
+	"draw_empty": "Aucun resto ne matche les filtres. Change tes criteres !"
 }

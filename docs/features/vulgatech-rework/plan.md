@@ -13,7 +13,7 @@
 | Epic 5 — Filters & Favorites | ✅ Done |
 | Epic 6 — Random Draw | ✅ Done |
 | Epic 7 — Polish & Accessibility | ✅ Done |
-| Epic 8 — DevOps, Slack & Docs | 🔲 Not started |
+| Epic 8 — DevOps, Slack & Docs | ✅ Done |
 
 ---
 

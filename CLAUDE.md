@@ -37,6 +37,7 @@ Collaborative restaurant picker MVP. Next.js 15 App Router + Drizzle + PostgreSQ
 - `messages/` - Paraglide i18n messages (fr.json)
 - `e2e/` - Playwright E2E tests
 - `docs/adr/` - Architecture Decision Records
+- `docs/guide/` - Vulgatech architecture guide
 
 ## Conventions
 - Server Components by default. Only add "use client" when truly needed.

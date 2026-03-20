@@ -34,6 +34,7 @@ jobs:
       - run: pnpm test:coverage
 
   e2e-tests:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs: [quality, unit-tests]
     steps:
@@ -72,3 +73,19 @@ jobs:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch: ci/pr-${{ github.event.pull_request.number || github.sha }}
           api_key: ${{ secrets.NEON_API_KEY }}
+
+  migrate:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: [quality, unit-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:push
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

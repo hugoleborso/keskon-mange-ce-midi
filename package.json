@@ -64,6 +64,7 @@
 		"drizzle-kit": "^0.31.9",
 		"jsdom": "^26.1.0",
 		"knip": "^5.62.0",
+		"lefthook": "^2.1.4",
 		"tailwindcss": "^4.1.8",
 		"typescript": "^5.8.3",
 		"vite-tsconfig-paths": "^5.1.4",

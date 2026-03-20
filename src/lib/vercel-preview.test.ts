@@ -4,9 +4,7 @@ import { isProjectPreviewUrl } from "./vercel-preview";
 describe("isProjectPreviewUrl", () => {
 	it("accepts a valid preview URL", () => {
 		expect(
-			isProjectPreviewUrl(
-				"https://keskon-mange-ce-midi-abc123-hugoleborsos-projects.vercel.app",
-			),
+			isProjectPreviewUrl("https://keskon-mange-ce-midi-abc123-hugoleborsos-projects.vercel.app"),
 		).toBe(true);
 	});
 
@@ -24,25 +22,19 @@ describe("isProjectPreviewUrl", () => {
 
 	it("rejects a URL with the right prefix but wrong scope", () => {
 		expect(
-			isProjectPreviewUrl(
-				"https://keskon-mange-ce-midi-abc123-attacker-projects.vercel.app",
-			),
+			isProjectPreviewUrl("https://keskon-mange-ce-midi-abc123-attacker-projects.vercel.app"),
 		).toBe(false);
 	});
 
 	it("rejects a URL with the right scope but wrong project", () => {
 		expect(
-			isProjectPreviewUrl(
-				"https://other-project-abc123-hugoleborsos-projects.vercel.app",
-			),
+			isProjectPreviewUrl("https://other-project-abc123-hugoleborsos-projects.vercel.app"),
 		).toBe(false);
 	});
 
 	it("rejects http URLs", () => {
 		expect(
-			isProjectPreviewUrl(
-				"http://keskon-mange-ce-midi-abc123-hugoleborsos-projects.vercel.app",
-			),
+			isProjectPreviewUrl("http://keskon-mange-ce-midi-abc123-hugoleborsos-projects.vercel.app"),
 		).toBe(false);
 	});
 

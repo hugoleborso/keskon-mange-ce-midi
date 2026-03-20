@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { SessionProvider } from "@/providers/session-provider";
 import { auth } from "@/server/auth";
@@ -23,6 +24,7 @@ export default async function RootLayout({
 		<html lang="fr" className={cn("font-sans", geist.variable)}>
 			<body>
 				<SessionProvider session={session}>{children}</SessionProvider>
+				<Analytics />
 			</body>
 		</html>
 	);

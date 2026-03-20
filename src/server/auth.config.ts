@@ -1,14 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
-
-function isVercelPreviewUrl(url: string): boolean {
-	try {
-		const parsed = new URL(url);
-		return parsed.protocol === "https:" && parsed.hostname.endsWith(".vercel.app");
-	} catch {
-		return false;
-	}
-}
+import { isProjectPreviewUrl } from "@/lib/vercel-preview";
 
 export const authConfig = {
 	providers: [Google],
@@ -40,7 +32,7 @@ export const authConfig = {
 			if (url.startsWith(baseUrl)) return url;
 
 			// Vercel preview: route through session transfer
-			if (isVercelPreviewUrl(url)) {
+			if (isProjectPreviewUrl(url)) {
 				return `${baseUrl}/api/auth/transfer?to=${encodeURIComponent(url)}`;
 			}
 

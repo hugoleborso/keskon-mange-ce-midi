@@ -1,20 +1,12 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-
-function isValidVercelPreviewUrl(url: string): boolean {
-	try {
-		const parsed = new URL(url);
-		return parsed.protocol === "https:" && parsed.hostname.endsWith(".vercel.app");
-	} catch {
-		return false;
-	}
-}
+import { isProjectPreviewUrl } from "@/lib/vercel-preview";
 
 export async function GET(request: Request) {
 	const { searchParams } = new URL(request.url);
 	const to = searchParams.get("to");
 
-	if (!to || !isValidVercelPreviewUrl(to)) {
+	if (!to || !isProjectPreviewUrl(to)) {
 		return NextResponse.redirect(new URL("/", request.url));
 	}
 

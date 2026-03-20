@@ -1,0 +1,18 @@
+{
+	"$schema": "https://unpkg.com/knip@latest/schema.json",
+	"entry": ["src/app/**/*.{ts,tsx}"],
+	"project": ["src/**/*.{ts,tsx}"],
+	"ignore": ["src/components/ui/**"],
+	"ignoreDependencies": [
+		"@base-ui/react",
+		"class-variance-authority",
+		"postcss",
+		"shadcn",
+		"tailwindcss",
+		"tw-animate-css"
+	],
+	"ignoreBinaries": [],
+	"next": {
+		"entry": ["src/app/**/*.{ts,tsx}", "next.config.ts"]
+	}
+}

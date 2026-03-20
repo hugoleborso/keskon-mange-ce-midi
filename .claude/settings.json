@@ -1,0 +1,15 @@
+{
+	"hooks": {
+		"PostToolUse": [
+			{
+				"matcher": "Edit|Write",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "jq -r '.tool_input.file_path' | xargs -I {} sh -c 'case \"{}\" in *.ts|*.tsx|*.js|*.jsx|*.json|*.jsonc) cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec biome format --write \"{}\" 2>/dev/null || true ;; esac'"
+					}
+				]
+			}
+		]
+	}
+}

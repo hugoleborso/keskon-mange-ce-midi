@@ -21,8 +21,9 @@ export default function LoginPage() {
 				action={async () => {
 					"use server";
 					if (previewOrigin && productionUrl) {
-						const callbackUrl = `${productionUrl}/api/auth/signin/google?callbackUrl=${encodeURIComponent(previewOrigin)}`;
-						redirect(callbackUrl);
+						redirect(
+							`${productionUrl}/api/auth/preview-login?returnTo=${encodeURIComponent(previewOrigin)}`,
+						);
 					}
 					await signIn("google");
 				}}

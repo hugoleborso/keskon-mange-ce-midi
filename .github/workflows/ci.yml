@@ -34,9 +34,25 @@ jobs:
       - run: pnpm test:coverage
 
   e2e-tests:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     needs: [quality, unit-tests]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
+      AUTH_SECRET: ci-test-secret
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -46,33 +62,12 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps
-      - name: Create Neon branch
-        id: neon
-        uses: neondatabase/create-branch-action@v6
-        with:
-          project_id: ${{ vars.NEON_PROJECT_ID }}
-          branch_name: ci/pr-${{ github.event.pull_request.number || github.sha }}
-          api_key: ${{ secrets.NEON_API_KEY }}
       - run: pnpm db:push
-        env:
-          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
       - run: pnpm build
         env:
-          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
-          AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          AUTH_GOOGLE_ID: fake
+          AUTH_GOOGLE_SECRET: fake
       - run: pnpm test:e2e
-        env:
-          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-      - name: Delete Neon branch
-        if: always()
-        uses: neondatabase/delete-branch-action@v3
-        with:
-          project_id: ${{ vars.NEON_PROJECT_ID }}
-          branch: ci/pr-${{ github.event.pull_request.number || github.sha }}
-          api_key: ${{ secrets.NEON_API_KEY }}
 
   migrate:
     if: github.event_name == 'push'

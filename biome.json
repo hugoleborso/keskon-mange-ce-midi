@@ -56,7 +56,8 @@
 			"!.claude/settings.local.json",
 			"!src/paraglide",
 			"!project.inlang",
-			"!coverage"
+			"!coverage",
+			"!.vercel"
 		]
 	}
 }

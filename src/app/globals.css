@@ -1,3 +1,4 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: Leaflet injects inline styles that can only be overridden with !important */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

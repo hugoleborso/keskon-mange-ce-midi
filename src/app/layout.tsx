@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ export default async function RootLayout({
 		<html lang="fr" className={cn("font-sans", geist.variable)}>
 			<body>
 				<SessionProvider session={session}>{children}</SessionProvider>
+				<Analytics />
 			</body>
 		</html>
 	);

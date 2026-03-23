@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 export interface PlaceSuggestion {
 	displayName: string;
@@ -10,12 +10,10 @@ export interface PlaceSuggestion {
 }
 
 export function usePlacesAutocomplete() {
-	const [query, setQuery] = useState("");
 	const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
-	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const fetchSuggestions = useCallback(async (input: string) => {
+	const search = useCallback(async (input: string) => {
 		if (input.length < 2) {
 			setSuggestions([]);
 			return;
@@ -35,26 +33,9 @@ export function usePlacesAutocomplete() {
 		}
 	}, []);
 
-	useEffect(() => {
-		if (debounceRef.current) {
-			clearTimeout(debounceRef.current);
-		}
-
-		debounceRef.current = setTimeout(() => {
-			fetchSuggestions(query);
-		}, 300);
-
-		return () => {
-			if (debounceRef.current) {
-				clearTimeout(debounceRef.current);
-			}
-		};
-	}, [query, fetchSuggestions]);
-
 	const clear = useCallback(() => {
 		setSuggestions([]);
-		setQuery("");
 	}, []);
 
-	return { query, setQuery, suggestions, isLoading, clear };
+	return { suggestions, isLoading, search, clear };
 }

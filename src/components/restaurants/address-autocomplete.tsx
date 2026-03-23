@@ -1,54 +1,71 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { type PlaceSuggestion, usePlacesAutocomplete } from "@/hooks/use-places-autocomplete";
 import * as m from "@/paraglide/messages.js";
 
 export function AddressAutocomplete({
 	defaultValue,
+	defaultName,
 	onSelect,
 	onClear,
 }: {
 	defaultValue?: string;
+	defaultName?: string;
 	onSelect?: (suggestion: PlaceSuggestion) => void;
 	onClear?: () => void;
 }) {
-	const { setQuery, suggestions, isLoading } = usePlacesAutocomplete();
+	const { suggestions, isLoading, search, clear } = usePlacesAutocomplete();
 	const [address, setAddress] = useState(defaultValue ?? "");
 	const [showSuggestions, setShowSuggestions] = useState(false);
-	const wrapperRef = useRef<HTMLDivElement>(null);
+
+	const handleSearch = () => {
+		const query = address || defaultName || "";
+		if (query.length >= 2) {
+			search(query);
+			setShowSuggestions(true);
+		}
+	};
 
 	const handleSelect = (suggestion: PlaceSuggestion) => {
 		setAddress(suggestion.formattedAddress);
-		setQuery("");
+		clear();
 		setShowSuggestions(false);
 		onSelect?.(suggestion);
 	};
 
 	return (
-		<div ref={wrapperRef} className="relative">
-			<input
-				id="address"
-				name="address"
-				type="text"
-				required
-				value={address}
-				onChange={(e) => {
-					setAddress(e.target.value);
-					setQuery(e.target.value);
-					setShowSuggestions(true);
-					onClear?.();
-				}}
-				onFocus={() => {
-					if (suggestions.length > 0) setShowSuggestions(true);
-				}}
-				onBlur={() => {
-					// Delay to allow click on suggestion
-					setTimeout(() => setShowSuggestions(false), 200);
-				}}
-				placeholder={m.restaurant_address()}
-				className="w-full rounded-md border px-3 py-2"
-			/>
+		<div className="relative">
+			<div className="flex gap-2">
+				<input
+					id="address"
+					name="address"
+					type="text"
+					required
+					value={address}
+					onChange={(e) => {
+						setAddress(e.target.value);
+						setShowSuggestions(false);
+						onClear?.();
+					}}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") {
+							e.preventDefault();
+							handleSearch();
+						}
+					}}
+					placeholder={m.restaurant_address()}
+					className="flex-1 rounded-md border px-3 py-2"
+				/>
+				<button
+					type="button"
+					onClick={handleSearch}
+					disabled={isLoading}
+					className="rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background hover:bg-foreground/80 disabled:opacity-50"
+				>
+					{isLoading ? "..." : m.restaurant_search_address()}
+				</button>
+			</div>
 			{showSuggestions && suggestions.length > 0 && (
 				<ul className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover shadow-md">
 					{suggestions.map((suggestion) => (
@@ -66,9 +83,6 @@ export function AddressAutocomplete({
 						</li>
 					))}
 				</ul>
-			)}
-			{isLoading && showSuggestions && (
-				<div className="absolute right-3 top-2.5 text-xs text-muted-foreground">...</div>
 			)}
 		</div>
 	);

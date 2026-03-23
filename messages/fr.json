@@ -18,6 +18,7 @@
 	"restaurant_take_away": "A emporter",
 	"restaurant_save": "Enregistrer",
 	"restaurant_select_address": "Selectionne une adresse dans les suggestions pour continuer.",
+	"restaurant_search_address": "Rechercher",
 	"restaurant_edit": "Modifier",
 	"restaurant_created_by": "Ajoute par {name}",
 	"restaurant_reviews": "{count} avis",

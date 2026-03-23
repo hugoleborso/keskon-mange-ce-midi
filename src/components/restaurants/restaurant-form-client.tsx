@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { PlaceSuggestion } from "@/hooks/use-places-autocomplete";
 import { LABELS, PRICE_RANGE_LABELS, PRICE_RANGES, RESTAURANT_TYPES } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
@@ -26,7 +26,7 @@ export function RestaurantFormClient({
 		latitude: number;
 		longitude: number;
 	} | null>(null);
-	const nameInputRef = useRef<HTMLInputElement>(null);
+	const [nameValue, setNameValue] = useState(restaurant?.name ?? "");
 	const isGeocoded = isEditing || placeData !== null;
 
 	const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
@@ -35,9 +35,8 @@ export function RestaurantFormClient({
 			latitude: suggestion.latitude,
 			longitude: suggestion.longitude,
 		});
-		// Auto-fill name if empty
-		if (nameInputRef.current && !nameInputRef.current.value) {
-			nameInputRef.current.value = suggestion.displayName;
+		if (!nameValue) {
+			setNameValue(suggestion.displayName);
 		}
 	};
 
@@ -56,12 +55,12 @@ export function RestaurantFormClient({
 					{m.restaurant_name()}
 				</label>
 				<input
-					ref={nameInputRef}
 					id="name"
 					name="name"
 					type="text"
 					required
-					defaultValue={restaurant?.name}
+					value={nameValue}
+					onChange={(e) => setNameValue(e.target.value)}
 					className="rounded-md border px-3 py-2"
 				/>
 			</div>
@@ -72,6 +71,7 @@ export function RestaurantFormClient({
 				</label>
 				<AddressAutocomplete
 					defaultValue={restaurant?.address}
+					defaultName={nameValue}
 					onSelect={handlePlaceSelect}
 					onClear={() => setPlaceData(null)}
 				/>

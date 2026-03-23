@@ -5,31 +5,27 @@ import { usePlacesAutocomplete } from "./use-places-autocomplete";
 describe("usePlacesAutocomplete", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.useFakeTimers();
 		global.fetch = vi.fn();
 	});
 
 	it("initializes with empty state", () => {
 		const { result } = renderHook(() => usePlacesAutocomplete());
 
-		expect(result.current.query).toBe("");
 		expect(result.current.suggestions).toEqual([]);
 		expect(result.current.isLoading).toBe(false);
 	});
 
-	it("does not fetch for queries shorter than 2 characters", () => {
+	it("does not fetch for queries shorter than 2 characters", async () => {
 		const { result } = renderHook(() => usePlacesAutocomplete());
 
-		act(() => {
-			result.current.setQuery("a");
+		await act(async () => {
+			await result.current.search("a");
 		});
-
-		vi.advanceTimersByTime(300);
 
 		expect(global.fetch).not.toHaveBeenCalled();
 	});
 
-	it("fetches suggestions after debounce", async () => {
+	it("fetches suggestions on search", async () => {
 		const mockResponse = {
 			suggestions: [
 				{
@@ -47,15 +43,9 @@ describe("usePlacesAutocomplete", () => {
 
 		const { result } = renderHook(() => usePlacesAutocomplete());
 
-		act(() => {
-			result.current.setQuery("test place");
+		await act(async () => {
+			await result.current.search("test place");
 		});
-
-		act(() => {
-			vi.advanceTimersByTime(300);
-		});
-
-		vi.useRealTimers();
 
 		await waitFor(() => {
 			expect(result.current.suggestions).toHaveLength(1);
@@ -70,15 +60,9 @@ describe("usePlacesAutocomplete", () => {
 
 		const { result } = renderHook(() => usePlacesAutocomplete());
 
-		act(() => {
-			result.current.setQuery("test place");
+		await act(async () => {
+			await result.current.search("test place");
 		});
-
-		act(() => {
-			vi.advanceTimersByTime(300);
-		});
-
-		vi.useRealTimers();
 
 		await waitFor(() => {
 			expect(result.current.isLoading).toBe(false);
@@ -92,15 +76,9 @@ describe("usePlacesAutocomplete", () => {
 
 		const { result } = renderHook(() => usePlacesAutocomplete());
 
-		act(() => {
-			result.current.setQuery("test place");
+		await act(async () => {
+			await result.current.search("test place");
 		});
-
-		act(() => {
-			vi.advanceTimersByTime(300);
-		});
-
-		vi.useRealTimers();
 
 		await waitFor(() => {
 			expect(result.current.isLoading).toBe(false);
@@ -116,7 +94,6 @@ describe("usePlacesAutocomplete", () => {
 			result.current.clear();
 		});
 
-		expect(result.current.query).toBe("");
 		expect(result.current.suggestions).toEqual([]);
 	});
 });

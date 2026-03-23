@@ -1,10 +1,17 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AttendanceButton } from "@/components/attendance/attendance-button";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { ReviewList } from "@/components/reviews/review-list";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import { auth } from "@/server/auth";
+import {
+	getRestaurantAttendance,
+	getTodayDateString,
+	getUserAttendance,
+} from "@/server/queries/attendance";
 import { getRestaurantById } from "@/server/queries/restaurants";
 import { getReviewsByRestaurant, getUserReview } from "@/server/queries/reviews";
 
@@ -18,10 +25,17 @@ export default async function RestaurantDetailPage({
 
 	if (!restaurant) notFound();
 
-	const [reviews, userReview] = await Promise.all([
+	const today = getTodayDateString();
+
+	const [reviews, userReview, attendees, userAttendingId] = await Promise.all([
 		getReviewsByRestaurant(id),
 		session?.user?.id ? getUserReview(id, session.user.id) : null,
+		getRestaurantAttendance(id, today),
+		session?.user?.id ? getUserAttendance(session.user.id, today) : null,
 	]);
+
+	// Collect all photos from reviews for a gallery
+	const allPhotos = reviews.flatMap((r) => r.photoUrls ?? []);
 
 	return (
 		<main className="mx-auto max-w-2xl p-4">
@@ -41,6 +55,17 @@ export default async function RestaurantDetailPage({
 					{m.restaurant_edit()}
 				</Link>
 			</div>
+
+			{/* Attendance */}
+			{session?.user && (
+				<div className="mt-4">
+					<AttendanceButton
+						restaurantId={id}
+						isAttending={userAttendingId === id}
+						attendees={attendees}
+					/>
+				</div>
+			)}
 
 			<div className="mt-4 flex flex-wrap gap-2">
 				{restaurant.restaurantType && (
@@ -88,6 +113,26 @@ export default async function RestaurantDetailPage({
 				>
 					{m.map_view_on_map()}
 				</Link>
+			)}
+
+			{/* Photo gallery */}
+			{allPhotos.length > 0 && (
+				<section className="mt-6">
+					<h2 className="mb-3 text-lg font-semibold">{m.restaurant_gallery()}</h2>
+					<div className="flex flex-wrap gap-2">
+						{allPhotos.map((url) => (
+							<Image
+								key={url}
+								src={url}
+								alt=""
+								width={160}
+								height={160}
+								className="rounded-md object-cover"
+								style={{ width: 160, height: 160 }}
+							/>
+						))}
+					</div>
+				</section>
 			)}
 
 			<section className="mt-8">

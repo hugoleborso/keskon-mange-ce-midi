@@ -84,6 +84,43 @@ describe("createReviewSchema", () => {
 		});
 		expect(result.comment).toBe("");
 	});
+
+	it("accepts valid photoUrls", () => {
+		const result = createReviewSchema.parse({
+			restaurantId: validUuid,
+			rating: 4,
+			photoUrls: ["https://example.com/photo1.jpg", "https://example.com/photo2.jpg"],
+		});
+		expect(result.photoUrls).toHaveLength(2);
+	});
+
+	it("defaults photoUrls to empty array", () => {
+		const result = createReviewSchema.parse({
+			restaurantId: validUuid,
+			rating: 4,
+		});
+		expect(result.photoUrls).toEqual([]);
+	});
+
+	it("rejects more than 5 photos", () => {
+		expect(() =>
+			createReviewSchema.parse({
+				restaurantId: validUuid,
+				rating: 4,
+				photoUrls: Array.from({ length: 6 }, (_, i) => `https://example.com/photo${i}.jpg`),
+			}),
+		).toThrow();
+	});
+
+	it("rejects invalid photo URLs", () => {
+		expect(() =>
+			createReviewSchema.parse({
+				restaurantId: validUuid,
+				rating: 4,
+				photoUrls: ["not-a-url"],
+			}),
+		).toThrow();
+	});
 });
 
 describe("updateReviewSchema", () => {

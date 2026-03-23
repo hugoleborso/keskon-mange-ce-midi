@@ -93,6 +93,25 @@ describe("createReview", () => {
 		expect(revalidatePath).toHaveBeenCalledWith("/");
 	});
 
+	it("creates a review with photo URLs", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		mockInsertValues.mockResolvedValueOnce(undefined);
+
+		const fd = new FormData();
+		fd.set("restaurantId", validRestaurantId);
+		fd.set("rating", "4");
+		fd.append("photoUrls", "https://example.com/photo1.jpg");
+		fd.append("photoUrls", "https://example.com/photo2.jpg");
+
+		await createReview(fd);
+
+		expect(mockInsertValues).toHaveBeenCalledWith(
+			expect.objectContaining({
+				photoUrls: ["https://example.com/photo1.jpg", "https://example.com/photo2.jpg"],
+			}),
+		);
+	});
+
 	it("throws on invalid input", async () => {
 		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
 
@@ -148,6 +167,27 @@ describe("updateReview", () => {
 			expect.objectContaining({ rating: 5, comment: "Updated" }),
 		);
 		expect(revalidatePath).toHaveBeenCalledWith(`/restaurants/${validRestaurantId}`);
+	});
+
+	it("updates review with photo URLs", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		mockSelectLimit.mockResolvedValueOnce([
+			{ authorId: "user-1", restaurantId: validRestaurantId },
+		]);
+		mockUpdateWhere.mockResolvedValueOnce(undefined);
+
+		const fd = new FormData();
+		fd.set("id", validUuid);
+		fd.set("rating", "5");
+		fd.append("photoUrls", "https://example.com/photo.jpg");
+
+		await updateReview(fd);
+
+		expect(mockUpdateSet).toHaveBeenCalledWith(
+			expect.objectContaining({
+				photoUrls: ["https://example.com/photo.jpg"],
+			}),
+		);
 	});
 });
 

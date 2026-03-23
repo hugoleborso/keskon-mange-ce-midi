@@ -46,6 +46,21 @@ export function ReviewList({
 						<StarRating value={review.rating} readOnly />
 					</div>
 					{review.comment && <p className="mt-2 text-sm">{review.comment}</p>}
+					{review.photoUrls && review.photoUrls.length > 0 && (
+						<div className="mt-3 flex flex-wrap gap-2">
+							{review.photoUrls.map((url) => (
+								<Image
+									key={url}
+									src={url}
+									alt=""
+									width={120}
+									height={120}
+									className="rounded-md object-cover"
+									style={{ width: 120, height: 120 }}
+								/>
+							))}
+						</div>
+					)}
 				</div>
 			))}
 		</div>

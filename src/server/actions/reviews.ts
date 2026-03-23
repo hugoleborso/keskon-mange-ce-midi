@@ -15,12 +15,14 @@ export async function createReview(formData: FormData) {
 		restaurantId: formData.get("restaurantId"),
 		rating: formData.get("rating"),
 		comment: formData.get("comment") || undefined,
+		photoUrls: formData.getAll("photoUrls").filter((v) => typeof v === "string" && v.length > 0),
 	};
 
 	const validated = createReviewSchema.parse(raw);
 
 	await db.insert(reviews).values({
 		...validated,
+		photoUrls: validated.photoUrls.length > 0 ? validated.photoUrls : null,
 		authorId: session.user.id,
 	});
 
@@ -36,6 +38,7 @@ export async function updateReview(formData: FormData) {
 		id: formData.get("id"),
 		rating: formData.get("rating"),
 		comment: formData.get("comment") || undefined,
+		photoUrls: formData.getAll("photoUrls").filter((v) => typeof v === "string" && v.length > 0),
 	};
 
 	const validated = updateReviewSchema.parse(raw);
@@ -54,6 +57,7 @@ export async function updateReview(formData: FormData) {
 		.set({
 			rating: validated.rating,
 			comment: validated.comment,
+			photoUrls: validated.photoUrls.length > 0 ? validated.photoUrls : null,
 			updatedAt: new Date(),
 		})
 		.where(eq(reviews.id, validated.id));

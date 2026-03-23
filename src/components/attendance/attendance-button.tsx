@@ -9,10 +9,12 @@ import { AttendanceAvatars } from "./attendance-avatars";
 export function AttendanceButton({
 	restaurantId,
 	isAttending,
+	isAttendingOther,
 	attendees,
 }: {
 	restaurantId: string;
 	isAttending: boolean;
+	isAttendingOther: boolean;
 	attendees: AttendanceUser[];
 }) {
 	return (
@@ -22,11 +24,15 @@ export function AttendanceButton({
 				<SubmitButton
 					className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
 						isAttending
-							? "bg-primary text-primary-foreground hover:bg-primary/90"
-							: "border hover:bg-muted"
+							? "bg-foreground text-background hover:bg-foreground/80"
+							: "border border-foreground/20 text-foreground hover:bg-foreground/10"
 					}`}
 				>
-					{isAttending ? m.attendance_going() : m.attendance_go()}
+					{isAttending
+						? m.attendance_going()
+						: isAttendingOther
+							? m.attendance_go()
+							: m.attendance_go()}
 				</SubmitButton>
 			</form>
 			<AttendanceAvatars users={attendees} />

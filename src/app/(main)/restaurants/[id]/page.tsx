@@ -62,6 +62,9 @@ export default async function RestaurantDetailPage({
 					<AttendanceButton
 						restaurantId={id}
 						isAttending={userAttendingId === id}
+						isAttendingOther={
+							userAttendingId !== null && userAttendingId !== undefined && userAttendingId !== id
+						}
 						attendees={attendees}
 					/>
 				</div>

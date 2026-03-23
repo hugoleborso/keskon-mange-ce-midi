@@ -33,26 +33,30 @@ export function RestaurantList({
 	return (
 		<div className="grid gap-3">
 			{restaurants.map((restaurant) => (
-				<div key={restaurant.id}>
-					<RestaurantCard
-						restaurant={restaurant}
-						favoriteButton={
-							<FavoriteButton
-								restaurantId={restaurant.id}
-								isFavorite={favoriteIds.includes(restaurant.id)}
-							/>
-						}
-					/>
-					{isAuthenticated && (
-						<div className="px-4 pb-3">
+				<RestaurantCard
+					key={restaurant.id}
+					restaurant={restaurant}
+					favoriteButton={
+						<FavoriteButton
+							restaurantId={restaurant.id}
+							isFavorite={favoriteIds.includes(restaurant.id)}
+						/>
+					}
+					attendanceSlot={
+						isAuthenticated ? (
 							<AttendanceButton
 								restaurantId={restaurant.id}
 								isAttending={userAttendingId === restaurant.id}
+								isAttendingOther={
+									userAttendingId !== null &&
+									userAttendingId !== undefined &&
+									userAttendingId !== restaurant.id
+								}
 								attendees={attendanceData[restaurant.id] ?? []}
 							/>
-						</div>
-					)}
-				</div>
+						) : undefined
+					}
+				/>
 			))}
 		</div>
 	);

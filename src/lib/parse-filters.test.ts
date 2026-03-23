@@ -35,7 +35,7 @@ describe("parsePriceRange", () => {
 		]);
 	});
 
-	it("does not split comma-separated strings (treats as single value)", () => {
-		expect(parsePriceRange("EUR_1,EUR_2")).toEqual([]);
+	it("splits comma-separated strings (nuqs array format)", () => {
+		expect(parsePriceRange("EUR_1,EUR_2")).toEqual(["EUR_1", "EUR_2"]);
 	});
 });

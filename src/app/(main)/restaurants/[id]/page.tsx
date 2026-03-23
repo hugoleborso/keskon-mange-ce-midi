@@ -117,12 +117,22 @@ export default async function RestaurantDetailPage({
 			</div>
 
 			{restaurant.latitude && restaurant.longitude && (
-				<Link
-					href={`/?selected=${restaurant.id}`}
-					className="mt-3 inline-block text-sm text-primary hover:underline"
-				>
-					{m.map_view_on_map()}
-				</Link>
+				<div className="mt-3 flex items-center gap-3">
+					<Link
+						href={`/?selected=${restaurant.id}`}
+						className="text-sm text-primary hover:underline"
+					>
+						{m.map_view_on_map()}
+					</Link>
+					<a
+						href={`https://www.google.com/maps/dir/?api=1&destination=${restaurant.latitude},${restaurant.longitude}`}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background hover:bg-foreground/80"
+					>
+						{m.restaurant_navigate()}
+					</a>
+				</div>
 			)}
 
 			{/* Photo gallery */}

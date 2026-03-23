@@ -1,15 +1,23 @@
 import Link from "next/link";
+import { AttendanceButton } from "@/components/attendance/attendance-button";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import * as m from "@/paraglide/messages.js";
+import type { AttendanceUser } from "@/server/queries/attendance";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { RestaurantCard } from "./restaurant-card";
 
 export function RestaurantList({
 	restaurants,
 	favoriteIds = [],
+	attendanceData = {},
+	userAttendingId,
+	isAuthenticated = false,
 }: {
 	restaurants: RestaurantWithRating[];
 	favoriteIds?: string[];
+	attendanceData?: Record<string, AttendanceUser[]>;
+	userAttendingId?: string | null;
+	isAuthenticated?: boolean;
 }) {
 	if (restaurants.length === 0) {
 		return (
@@ -25,16 +33,26 @@ export function RestaurantList({
 	return (
 		<div className="grid gap-3">
 			{restaurants.map((restaurant) => (
-				<RestaurantCard
-					key={restaurant.id}
-					restaurant={restaurant}
-					favoriteButton={
-						<FavoriteButton
-							restaurantId={restaurant.id}
-							isFavorite={favoriteIds.includes(restaurant.id)}
-						/>
-					}
-				/>
+				<div key={restaurant.id}>
+					<RestaurantCard
+						restaurant={restaurant}
+						favoriteButton={
+							<FavoriteButton
+								restaurantId={restaurant.id}
+								isFavorite={favoriteIds.includes(restaurant.id)}
+							/>
+						}
+					/>
+					{isAuthenticated && (
+						<div className="px-4 pb-3">
+							<AttendanceButton
+								restaurantId={restaurant.id}
+								isAttending={userAttendingId === restaurant.id}
+								attendees={attendanceData[restaurant.id] ?? []}
+							/>
+						</div>
+					)}
+				</div>
 			))}
 		</div>
 	);

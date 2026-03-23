@@ -7,9 +7,20 @@ import { deleteReview } from "@/server/actions/reviews";
 import type { ReviewWithAuthor } from "@/server/queries/reviews";
 import { SubmitButton } from "../ui/submit-button";
 import { ReviewForm } from "./review-form";
+import { ReviewLikeButton } from "./review-like-button";
 import { StarRating } from "./star-rating";
 
-export function ReviewItem({ review, isOwner }: { review: ReviewWithAuthor; isOwner: boolean }) {
+export function ReviewItem({
+	review,
+	isOwner,
+	isLiked,
+	likeCount,
+}: {
+	review: ReviewWithAuthor;
+	isOwner: boolean;
+	isLiked: boolean;
+	likeCount: number;
+}) {
 	const [isEditing, setIsEditing] = useState(false);
 
 	if (isEditing) {
@@ -76,6 +87,9 @@ export function ReviewItem({ review, isOwner }: { review: ReviewWithAuthor; isOw
 					))}
 				</div>
 			)}
+			<div className="mt-2">
+				<ReviewLikeButton reviewId={review.id} isLiked={isLiked} likeCount={likeCount} />
+			</div>
 		</div>
 	);
 }

@@ -13,6 +13,7 @@ import {
 	getUserAttendance,
 } from "@/server/queries/attendance";
 import { getRestaurantById } from "@/server/queries/restaurants";
+import { getReviewLikeCounts, getUserReviewLikes } from "@/server/queries/review-likes";
 import { getReviewsByRestaurant, getUserReview } from "@/server/queries/reviews";
 
 export default async function RestaurantDetailPage({
@@ -32,6 +33,12 @@ export default async function RestaurantDetailPage({
 		session?.user?.id ? getUserReview(id, session.user.id) : null,
 		getRestaurantAttendance(id, today),
 		session?.user?.id ? getUserAttendance(session.user.id, today) : null,
+	]);
+
+	const reviewIds = reviews.map((r) => r.id);
+	const [likeCounts, userLikes] = await Promise.all([
+		getReviewLikeCounts(reviewIds),
+		session?.user?.id ? getUserReviewLikes(session.user.id, reviewIds) : new Set<string>(),
 	]);
 
 	// Collect all photos from reviews for a gallery
@@ -145,7 +152,12 @@ export default async function RestaurantDetailPage({
 						<ReviewForm restaurantId={id} />
 					</div>
 				)}
-				<ReviewList reviews={reviews} currentUserId={session?.user?.id} />
+				<ReviewList
+					reviews={reviews}
+					currentUserId={session?.user?.id}
+					likeCounts={likeCounts}
+					userLikes={userLikes}
+				/>
 			</section>
 		</main>
 	);

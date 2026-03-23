@@ -144,6 +144,20 @@ export const lunchAttendance = pgTable(
 	(table) => [primaryKey({ columns: [table.userId, table.date] })],
 );
 
+export const reviewLikes = pgTable(
+	"review_likes",
+	{
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		reviewId: text("review_id")
+			.notNull()
+			.references(() => reviews.id, { onDelete: "cascade" }),
+		createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+	},
+	(table) => [primaryKey({ columns: [table.userId, table.reviewId] })],
+);
+
 export const favorites = pgTable(
 	"favorites",
 	{

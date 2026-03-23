@@ -82,6 +82,16 @@ table restaurants {
   updated_at timestamp [not null, default: `now()`]
 }
 
+table review_likes {
+  user_id text [not null]
+  review_id text [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (user_id, review_id) [pk]
+  }
+}
+
 table reviews {
   id text [pk, not null]
   restaurant_id text [not null]
@@ -135,6 +145,10 @@ ref lunch_attendance_restaurant_id_restaurants_id_fk: lunch_attendance.restauran
 ref restaurants_category_id_categories_id_fk: restaurants.category_id > categories.id [delete: no action, update: no action]
 
 ref restaurants_created_by_users_id_fk: restaurants.created_by > users.id [delete: no action, update: no action]
+
+ref review_likes_user_id_users_id_fk: review_likes.user_id > users.id [delete: cascade, update: no action]
+
+ref review_likes_review_id_reviews_id_fk: review_likes.review_id > reviews.id [delete: cascade, update: no action]
 
 ref reviews_restaurant_id_restaurants_id_fk: reviews.restaurant_id > restaurants.id [delete: cascade, update: no action]
 

@@ -5,6 +5,7 @@ import * as m from "@/paraglide/messages.js";
 import type { AttendanceUser } from "@/server/queries/attendance";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { RestaurantCard } from "./restaurant-card";
+import { RestaurantCardWrapper } from "./restaurant-card-wrapper";
 
 export function RestaurantList({
 	restaurants,
@@ -33,30 +34,31 @@ export function RestaurantList({
 	return (
 		<div className="grid gap-3">
 			{restaurants.map((restaurant) => (
-				<RestaurantCard
-					key={restaurant.id}
-					restaurant={restaurant}
-					favoriteButton={
-						<FavoriteButton
-							restaurantId={restaurant.id}
-							isFavorite={favoriteIds.includes(restaurant.id)}
-						/>
-					}
-					attendanceSlot={
-						isAuthenticated ? (
-							<AttendanceButton
+				<RestaurantCardWrapper key={restaurant.id} restaurantId={restaurant.id}>
+					<RestaurantCard
+						restaurant={restaurant}
+						favoriteButton={
+							<FavoriteButton
 								restaurantId={restaurant.id}
-								isAttending={userAttendingId === restaurant.id}
-								isAttendingOther={
-									userAttendingId !== null &&
-									userAttendingId !== undefined &&
-									userAttendingId !== restaurant.id
-								}
-								attendees={attendanceData[restaurant.id] ?? []}
+								isFavorite={favoriteIds.includes(restaurant.id)}
 							/>
-						) : undefined
-					}
-				/>
+						}
+						attendanceSlot={
+							isAuthenticated ? (
+								<AttendanceButton
+									restaurantId={restaurant.id}
+									isAttending={userAttendingId === restaurant.id}
+									isAttendingOther={
+										userAttendingId !== null &&
+										userAttendingId !== undefined &&
+										userAttendingId !== restaurant.id
+									}
+									attendees={attendanceData[restaurant.id] ?? []}
+								/>
+							) : undefined
+						}
+					/>
+				</RestaurantCardWrapper>
 			))}
 		</div>
 	);

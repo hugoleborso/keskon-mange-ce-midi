@@ -1,6 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 
+interface NominatimResult {
+	display_name: string;
+	name: string;
+	lat: string;
+	lon: string;
+}
+
 interface PlaceSuggestion {
 	displayName: string;
 	formattedAddress: string;
@@ -14,55 +21,37 @@ export async function GET(request: NextRequest) {
 		return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
 	}
 
-	const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-	if (!apiKey) {
-		return NextResponse.json({ error: "Google Places API non configuree" }, { status: 503 });
-	}
-
 	const input = request.nextUrl.searchParams.get("input");
 	if (!input || input.length < 2) {
 		return NextResponse.json({ suggestions: [] });
 	}
 
 	try {
-		const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"X-Goog-Api-Key": apiKey,
-				"X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location",
-			},
-			body: JSON.stringify({
-				textQuery: input,
-				locationBias: {
-					circle: {
-						center: { latitude: 48.8566, longitude: 2.3522 },
-						radius: 20000,
-					},
-				},
-				maxResultCount: 5,
-				languageCode: "fr",
-			}),
+		const url = new URL("https://nominatim.openstreetmap.org/search");
+		url.searchParams.set("q", input);
+		url.searchParams.set("format", "json");
+		url.searchParams.set("limit", "5");
+		url.searchParams.set("addressdetails", "1");
+		url.searchParams.set("viewbox", "2.0,49.1,2.7,48.5");
+		url.searchParams.set("bounded", "1");
+		url.searchParams.set("accept-language", "fr");
+
+		const response = await fetch(url.toString(), {
+			headers: { "User-Agent": "keskon-mange-ce-midi/1.0" },
 		});
 
 		if (!response.ok) {
 			return NextResponse.json({ suggestions: [] });
 		}
 
-		const data = await response.json();
+		const results: NominatimResult[] = await response.json();
 
-		const suggestions: PlaceSuggestion[] = (data.places ?? []).map(
-			(place: {
-				displayName?: { text?: string };
-				formattedAddress?: string;
-				location?: { latitude?: number; longitude?: number };
-			}) => ({
-				displayName: place.displayName?.text ?? "",
-				formattedAddress: place.formattedAddress ?? "",
-				latitude: place.location?.latitude ?? 0,
-				longitude: place.location?.longitude ?? 0,
-			}),
-		);
+		const suggestions: PlaceSuggestion[] = results.map((result) => ({
+			displayName: result.name || result.display_name.split(",")[0],
+			formattedAddress: result.display_name,
+			latitude: Number.parseFloat(result.lat),
+			longitude: Number.parseFloat(result.lon),
+		}));
 
 		return NextResponse.json({ suggestions });
 	} catch {

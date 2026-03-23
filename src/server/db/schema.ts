@@ -94,7 +94,6 @@ export const restaurants = pgTable("restaurants", {
 	latitude: real("latitude").notNull(),
 	longitude: real("longitude").notNull(),
 	restaurantType: text("restaurant_type"),
-	categoryId: text("category_id").references(() => categories.id),
 	labels: text("labels").array(),
 	priceRange: priceRangeEnum("price_range"),
 	dineIn: boolean("dine_in").default(true).notNull(),
@@ -107,6 +106,19 @@ export const restaurants = pgTable("restaurants", {
 	createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
+
+export const restaurantCategories = pgTable(
+	"restaurant_categories",
+	{
+		restaurantId: text("restaurant_id")
+			.notNull()
+			.references(() => restaurants.id, { onDelete: "cascade" }),
+		categoryId: text("category_id")
+			.notNull()
+			.references(() => categories.id, { onDelete: "cascade" }),
+	},
+	(table) => [primaryKey({ columns: [table.restaurantId, table.categoryId] })],
+);
 
 export const reviews = pgTable(
 	"reviews",

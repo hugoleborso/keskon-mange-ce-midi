@@ -41,6 +41,12 @@ CREATE TABLE "lunch_attendance" (
 	CONSTRAINT "lunch_attendance_user_id_date_pk" PRIMARY KEY("user_id","date")
 );
 --> statement-breakpoint
+CREATE TABLE "restaurant_categories" (
+	"restaurant_id" text NOT NULL,
+	"category_id" text NOT NULL,
+	CONSTRAINT "restaurant_categories_restaurant_id_category_id_pk" PRIMARY KEY("restaurant_id","category_id")
+);
+--> statement-breakpoint
 CREATE TABLE "restaurants" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
@@ -48,7 +54,6 @@ CREATE TABLE "restaurants" (
 	"latitude" real NOT NULL,
 	"longitude" real NOT NULL,
 	"restaurant_type" text,
-	"category_id" text,
 	"labels" text[],
 	"price_range" "price_range",
 	"dine_in" boolean DEFAULT true NOT NULL,
@@ -107,7 +112,8 @@ ALTER TABLE "favorites" ADD CONSTRAINT "favorites_user_id_users_id_fk" FOREIGN K
 ALTER TABLE "favorites" ADD CONSTRAINT "favorites_restaurant_id_restaurants_id_fk" FOREIGN KEY ("restaurant_id") REFERENCES "public"."restaurants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "lunch_attendance" ADD CONSTRAINT "lunch_attendance_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "lunch_attendance" ADD CONSTRAINT "lunch_attendance_restaurant_id_restaurants_id_fk" FOREIGN KEY ("restaurant_id") REFERENCES "public"."restaurants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "restaurants" ADD CONSTRAINT "restaurants_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "restaurant_categories" ADD CONSTRAINT "restaurant_categories_restaurant_id_restaurants_id_fk" FOREIGN KEY ("restaurant_id") REFERENCES "public"."restaurants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "restaurant_categories" ADD CONSTRAINT "restaurant_categories_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "restaurants" ADD CONSTRAINT "restaurants_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "review_likes" ADD CONSTRAINT "review_likes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "review_likes" ADD CONSTRAINT "review_likes_review_id_reviews_id_fk" FOREIGN KEY ("review_id") REFERENCES "public"."reviews"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

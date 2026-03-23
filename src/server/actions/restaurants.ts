@@ -7,7 +7,7 @@ import { geocodeAddress } from "@/lib/geocoding";
 import { createRestaurantSchema, updateRestaurantSchema } from "@/lib/validations/restaurant";
 import { auth } from "../auth";
 import { db } from "../db";
-import { restaurants } from "../db/schema";
+import { restaurantCategories, restaurants } from "../db/schema";
 
 function parseOptionalCoord(value: FormDataEntryValue | null): number | undefined {
 	if (typeof value !== "string" || value === "") return undefined;
@@ -23,7 +23,9 @@ export async function createRestaurant(formData: FormData) {
 		name: formData.get("name"),
 		address: formData.get("address"),
 		restaurantType: formData.get("restaurantType") || undefined,
-		categoryId: formData.get("categoryId") || undefined,
+		categoryIds: formData
+			.getAll("categoryIds")
+			.filter((v) => typeof v === "string" && v.length > 0),
 		labels: formData.getAll("labels"),
 		priceRange: formData.get("priceRange") || undefined,
 		dineIn: formData.get("dineIn") === "on",
@@ -32,7 +34,6 @@ export async function createRestaurant(formData: FormData) {
 
 	const validated = createRestaurantSchema.parse(raw);
 
-	// Use coordinates from Places API if provided, otherwise geocode
 	const placeLat = parseOptionalCoord(formData.get("latitude"));
 	const placeLng = parseOptionalCoord(formData.get("longitude"));
 
@@ -49,15 +50,26 @@ export async function createRestaurant(formData: FormData) {
 		longitude = geo.longitude;
 	}
 
+	const { categoryIds, ...restaurantData } = validated;
+
 	const [restaurant] = await db
 		.insert(restaurants)
 		.values({
-			...validated,
+			...restaurantData,
 			latitude,
 			longitude,
 			createdBy: session.user.id,
 		})
 		.returning({ id: restaurants.id });
+
+	if (categoryIds.length > 0) {
+		await db.insert(restaurantCategories).values(
+			categoryIds.map((categoryId) => ({
+				restaurantId: restaurant.id,
+				categoryId,
+			})),
+		);
+	}
 
 	revalidatePath("/");
 	redirect(`/restaurants/${restaurant.id}`);
@@ -72,7 +84,9 @@ export async function updateRestaurant(formData: FormData) {
 		name: formData.get("name"),
 		address: formData.get("address"),
 		restaurantType: formData.get("restaurantType") || undefined,
-		categoryId: formData.get("categoryId") || undefined,
+		categoryIds: formData
+			.getAll("categoryIds")
+			.filter((v) => typeof v === "string" && v.length > 0),
 		labels: formData.getAll("labels"),
 		priceRange: formData.get("priceRange") || undefined,
 		dineIn: formData.get("dineIn") === "on",
@@ -98,15 +112,28 @@ export async function updateRestaurant(formData: FormData) {
 		longitude = geo.longitude;
 	}
 
+	const { categoryIds, ...restaurantData } = validated;
+
 	await db
 		.update(restaurants)
 		.set({
-			...validated,
+			...restaurantData,
 			latitude,
 			longitude,
 			updatedAt: new Date(),
 		})
 		.where(eq(restaurants.id, validated.id));
+
+	// Replace categories
+	await db.delete(restaurantCategories).where(eq(restaurantCategories.restaurantId, validated.id));
+	if (categoryIds.length > 0) {
+		await db.insert(restaurantCategories).values(
+			categoryIds.map((categoryId) => ({
+				restaurantId: validated.id,
+				categoryId,
+			})),
+		);
+	}
 
 	revalidatePath("/");
 	revalidatePath(`/restaurants/${validated.id}`);

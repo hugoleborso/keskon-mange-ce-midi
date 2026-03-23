@@ -14,10 +14,12 @@ export function RestaurantFormClient({
 	action,
 	restaurant,
 	categories,
+	selectedCategoryIds = [],
 }: {
 	action: (formData: FormData) => Promise<void>;
 	restaurant?: RestaurantWithRating;
 	categories?: Category[];
+	selectedCategoryIds?: string[];
 }) {
 	const hasCategories = categories && categories.length > 0;
 	const isEditing = !!restaurant;
@@ -78,25 +80,22 @@ export function RestaurantFormClient({
 			</div>
 
 			{hasCategories ? (
-				<div className="grid gap-1.5">
-					<label htmlFor="categoryId" className="text-sm font-medium">
-						{m.restaurant_type()}
-					</label>
-					<select
-						id="categoryId"
-						name="categoryId"
-						required
-						defaultValue={restaurant?.categoryId ?? ""}
-						className="rounded-md border px-3 py-2"
-					>
-						<option value="" />
+				<fieldset className="grid gap-1.5">
+					<legend className="text-sm font-medium">{m.restaurant_type()}</legend>
+					<div className="flex flex-wrap gap-2">
 						{categories.map((cat) => (
-							<option key={cat.id} value={cat.id}>
+							<label key={cat.id} className="flex items-center gap-1.5 text-sm">
+								<input
+									type="checkbox"
+									name="categoryIds"
+									value={cat.id}
+									defaultChecked={selectedCategoryIds.includes(cat.id)}
+								/>
 								{cat.name}
-							</option>
+							</label>
 						))}
-					</select>
-				</div>
+					</div>
+				</fieldset>
 			) : (
 				<div className="grid gap-1.5">
 					<label htmlFor="restaurantType" className="text-sm font-medium">

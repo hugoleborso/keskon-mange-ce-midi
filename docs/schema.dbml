@@ -63,6 +63,15 @@ table lunch_attendance {
   }
 }
 
+table restaurant_categories {
+  restaurant_id text [not null]
+  category_id text [not null]
+
+  indexes {
+    (restaurant_id, category_id) [pk]
+  }
+}
+
 table restaurants {
   id text [pk, not null]
   name text [not null]
@@ -70,7 +79,6 @@ table restaurants {
   latitude real [not null]
   longitude real [not null]
   restaurant_type text
-  category_id text
   labels text[]
   price_range price_range
   dine_in boolean [not null, default: true]
@@ -142,7 +150,9 @@ ref lunch_attendance_user_id_users_id_fk: lunch_attendance.user_id > users.id [d
 
 ref lunch_attendance_restaurant_id_restaurants_id_fk: lunch_attendance.restaurant_id > restaurants.id [delete: cascade, update: no action]
 
-ref restaurants_category_id_categories_id_fk: restaurants.category_id > categories.id [delete: no action, update: no action]
+ref restaurant_categories_restaurant_id_restaurants_id_fk: restaurant_categories.restaurant_id > restaurants.id [delete: cascade, update: no action]
+
+ref restaurant_categories_category_id_categories_id_fk: restaurant_categories.category_id > categories.id [delete: cascade, update: no action]
 
 ref restaurants_created_by_users_id_fk: restaurants.created_by > users.id [delete: no action, update: no action]
 

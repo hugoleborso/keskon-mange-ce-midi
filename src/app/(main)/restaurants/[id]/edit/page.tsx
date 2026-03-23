@@ -3,11 +3,15 @@ import { RestaurantFormClient } from "@/components/restaurants/restaurant-form-c
 import * as m from "@/paraglide/messages.js";
 import { updateRestaurant } from "@/server/actions/restaurants";
 import { getCategories } from "@/server/queries/categories";
-import { getRestaurantById } from "@/server/queries/restaurants";
+import { getRestaurantById, getRestaurantCategoryIds } from "@/server/queries/restaurants";
 
 export default async function EditRestaurantPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
-	const [restaurant, categories] = await Promise.all([getRestaurantById(id), getCategories()]);
+	const [restaurant, categories, selectedCategoryIds] = await Promise.all([
+		getRestaurantById(id),
+		getCategories(),
+		getRestaurantCategoryIds(id),
+	]);
 
 	if (!restaurant) notFound();
 
@@ -18,6 +22,7 @@ export default async function EditRestaurantPage({ params }: { params: Promise<{
 				action={updateRestaurant}
 				restaurant={restaurant}
 				categories={categories}
+				selectedCategoryIds={selectedCategoryIds}
 			/>
 		</main>
 	);

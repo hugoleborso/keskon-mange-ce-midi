@@ -21,21 +21,30 @@ vi.mock("../auth", () => ({
 
 // Mock db with chainable insert/update builder
 const mockReturning = vi.fn();
-const mockInsertValues = vi.fn(() => ({ returning: mockReturning }));
+const mockInsertValues = vi.fn(() => {
+	const result = Promise.resolve(undefined);
+	(result as unknown as Record<string, unknown>).returning = mockReturning;
+	return result;
+});
 const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
 const mockUpdateWhere = vi.fn();
 const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }));
 const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }));
 
+const mockDeleteWhere = vi.fn();
+const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }));
+
 vi.mock("../db", () => ({
 	db: {
 		insert: mockInsert,
 		update: mockUpdate,
+		delete: mockDelete,
 	},
 }));
 
 vi.mock("../db/schema", () => ({
 	restaurants: { id: "id" },
+	restaurantCategories: { restaurantId: "restaurant_id", categoryId: "category_id" },
 }));
 
 type MockFn = ReturnType<typeof vi.fn>;

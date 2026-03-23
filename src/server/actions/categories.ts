@@ -10,7 +10,7 @@ import {
 } from "@/lib/validations/category";
 import { auth } from "../auth";
 import { db } from "../db";
-import { categories, restaurants, users } from "../db/schema";
+import { categories, restaurantCategories, users } from "../db/schema";
 
 async function requireAdmin() {
 	const session = await auth();
@@ -75,11 +75,8 @@ export async function deleteCategory(formData: FormData) {
 		id: formData.get("id"),
 	});
 
-	// Set categoryId to null for restaurants using this category
-	await db
-		.update(restaurants)
-		.set({ categoryId: null })
-		.where(eq(restaurants.categoryId, validated.id));
+	// Remove join table entries for this category
+	await db.delete(restaurantCategories).where(eq(restaurantCategories.categoryId, validated.id));
 
 	await db.delete(categories).where(eq(categories.id, validated.id));
 

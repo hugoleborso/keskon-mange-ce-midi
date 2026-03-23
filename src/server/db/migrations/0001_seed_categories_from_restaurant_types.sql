@@ -19,10 +19,10 @@ VALUES
   (gen_random_uuid(), 'Autre', 'autre', now(), now())
 ON CONFLICT ("name") DO NOTHING;--> statement-breakpoint
 
--- Backfill categoryId on restaurants from restaurantType
-UPDATE "restaurants"
-SET "category_id" = "categories"."id"
-FROM "categories"
-WHERE "restaurants"."restaurant_type" IS NOT NULL
-  AND "restaurants"."category_id" IS NULL
-  AND "categories"."slug" = lower("restaurants"."restaurant_type");
+-- Backfill restaurant_categories join table from restaurantType
+INSERT INTO "restaurant_categories" ("restaurant_id", "category_id")
+SELECT r."id", c."id"
+FROM "restaurants" r
+JOIN "categories" c ON c."slug" = lower(r."restaurant_type")
+WHERE r."restaurant_type" IS NOT NULL
+ON CONFLICT DO NOTHING;

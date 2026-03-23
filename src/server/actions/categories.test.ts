@@ -27,7 +27,7 @@ vi.mock("../db", () => ({
 
 vi.mock("../db/schema", () => ({
 	categories: { id: "id", name: "name" },
-	restaurants: { categoryId: "category_id" },
+	restaurantCategories: { categoryId: "category_id", restaurantId: "restaurant_id" },
 	users: { id: "id", role: "role" },
 }));
 
@@ -129,15 +129,14 @@ describe("deleteCategory", () => {
 		).rejects.toThrow("Non autorise");
 	});
 
-	it("deletes category and resets restaurants when admin", async () => {
+	it("deletes category and removes join table entries when admin", async () => {
 		mockAdminAuth();
-		mockUpdateWhere.mockResolvedValueOnce(undefined);
+		mockDeleteWhere.mockResolvedValueOnce(undefined);
 		mockDeleteWhere.mockResolvedValueOnce(undefined);
 
 		await deleteCategory(makeFormData({ id: "550e8400-e29b-41d4-a716-446655440000" }));
 
-		expect(mockUpdateWhere).toHaveBeenCalled();
-		expect(mockDeleteWhere).toHaveBeenCalled();
+		expect(mockDeleteWhere).toHaveBeenCalledTimes(2);
 		expect(revalidatePath).toHaveBeenCalledWith("/admin/categories");
 	});
 });

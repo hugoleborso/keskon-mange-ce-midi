@@ -7,7 +7,7 @@ export const createRestaurantSchema = z.object({
 	restaurantType: z.enum(RESTAURANT_TYPES).optional(),
 	categoryId: z.string().uuid().optional(),
 	labels: z.array(z.enum(LABELS)).default([]),
-	priceRange: z.enum(PRICE_RANGES).optional(),
+	priceRange: z.enum(PRICE_RANGES),
 	dineIn: z.boolean().default(true),
 	takeAway: z.boolean().default(false),
 });

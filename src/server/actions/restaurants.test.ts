@@ -88,7 +88,7 @@ describe("createRestaurant", () => {
 		geocodeAddress.mockResolvedValueOnce(null);
 
 		await expect(
-			createRestaurant(makeFormData({ name: "Test", address: "unknown" })),
+			createRestaurant(makeFormData({ name: "Test", address: "unknown", priceRange: "EUR_1" })),
 		).rejects.toThrow("Adresse introuvable");
 	});
 
@@ -105,6 +105,7 @@ describe("createRestaurant", () => {
 			makeFormData({
 				name: "Chez Luigi",
 				address: "12 rue de la Paix",
+				priceRange: "EUR_2",
 				dineIn: "on",
 			}),
 		);
@@ -137,6 +138,7 @@ describe("createRestaurant", () => {
 			makeFormData({
 				name: "Test Place",
 				address: "123 Test St",
+				priceRange: "EUR_1",
 				latitude: "48.85",
 				longitude: "2.35",
 				dineIn: "on",
@@ -165,6 +167,7 @@ describe("createRestaurant", () => {
 			makeFormData({
 				name: "Test",
 				address: "12 rue",
+				priceRange: "EUR_1",
 				latitude: "invalid",
 				longitude: "2.35",
 				dineIn: "on",
@@ -189,6 +192,7 @@ describe("updateRestaurant", () => {
 					id: "550e8400-e29b-41d4-a716-446655440000",
 					name: "Test",
 					address: "12 rue",
+					priceRange: "EUR_1",
 				}),
 			),
 		).rejects.toThrow("Non authentifie");
@@ -204,6 +208,7 @@ describe("updateRestaurant", () => {
 					id: "550e8400-e29b-41d4-a716-446655440000",
 					name: "Test",
 					address: "nowhere",
+					priceRange: "EUR_1",
 				}),
 			),
 		).rejects.toThrow("Adresse introuvable");
@@ -224,6 +229,7 @@ describe("updateRestaurant", () => {
 				id,
 				name: "Updated Name",
 				address: "New Address",
+				priceRange: "EUR_2",
 				takeAway: "on",
 			}),
 		);
@@ -260,6 +266,7 @@ describe("updateRestaurant", () => {
 				id,
 				name: "Updated",
 				address: "New Address",
+				priceRange: "EUR_1",
 				latitude: "48.85",
 				longitude: "2.35",
 				takeAway: "on",

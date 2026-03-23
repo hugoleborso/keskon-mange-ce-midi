@@ -85,6 +85,7 @@ export function RestaurantFormClient({
 					<select
 						id="categoryId"
 						name="categoryId"
+						required
 						defaultValue={restaurant?.categoryId ?? ""}
 						className="rounded-md border px-3 py-2"
 					>
@@ -104,6 +105,7 @@ export function RestaurantFormClient({
 					<select
 						id="restaurantType"
 						name="restaurantType"
+						required
 						defaultValue={restaurant?.restaurantType ?? ""}
 						className="rounded-md border px-3 py-2"
 					>
@@ -124,6 +126,7 @@ export function RestaurantFormClient({
 				<select
 					id="priceRange"
 					name="priceRange"
+					required
 					defaultValue={restaurant?.priceRange ?? ""}
 					className="rounded-md border px-3 py-2"
 				>

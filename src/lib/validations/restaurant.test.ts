@@ -6,6 +6,7 @@ describe("createRestaurantSchema", () => {
 		const result = createRestaurantSchema.safeParse({
 			name: "Chez Luigi",
 			address: "12 rue de la Paix, Paris",
+			priceRange: "EUR_2",
 		});
 		expect(result.success).toBe(true);
 		if (result.success) {
@@ -14,6 +15,14 @@ describe("createRestaurantSchema", () => {
 			expect(result.data.dineIn).toBe(true);
 			expect(result.data.takeAway).toBe(false);
 		}
+	});
+
+	it("rejects missing price range", () => {
+		const result = createRestaurantSchema.safeParse({
+			name: "Chez Luigi",
+			address: "12 rue de la Paix",
+		});
+		expect(result.success).toBe(false);
 	});
 
 	it("validates a full valid input", () => {
@@ -98,8 +107,8 @@ describe("createRestaurantSchema", () => {
 		const result = createRestaurantSchema.safeParse({
 			name: "Chez Luigi",
 			address: "12 rue",
+			priceRange: "EUR_1",
 			restaurantType: undefined,
-			priceRange: undefined,
 		});
 		expect(result.success).toBe(true);
 	});
@@ -110,6 +119,7 @@ describe("updateRestaurantSchema", () => {
 		id: "550e8400-e29b-41d4-a716-446655440000",
 		name: "Chez Luigi",
 		address: "12 rue de la Paix",
+		priceRange: "EUR_2",
 	};
 
 	it("validates with a valid UUID id", () => {

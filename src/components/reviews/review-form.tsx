@@ -26,8 +26,18 @@ export function ReviewForm({
 	const [photoUrls, setPhotoUrls] = useState<string[]>(existingReview?.photoUrls ?? []);
 	const [uploading, setUploading] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const formRef = useRef<HTMLFormElement>(null);
 
-	const action = isEditing ? updateReview : createReview;
+	const serverAction = isEditing ? updateReview : createReview;
+
+	const action = async (formData: FormData) => {
+		await serverAction(formData);
+		if (!isEditing) {
+			setRating(0);
+			setPhotoUrls([]);
+			formRef.current?.reset();
+		}
+	};
 
 	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -65,7 +75,7 @@ export function ReviewForm({
 	};
 
 	return (
-		<form action={action} className="space-y-3 rounded-lg border p-4">
+		<form ref={formRef} action={action} className="space-y-3 rounded-lg border p-4">
 			<h3 className="font-semibold">{isEditing ? m.review_edit() : m.review_add()}</h3>
 			{isEditing ? (
 				<input type="hidden" name="id" value={existingReview.id} />

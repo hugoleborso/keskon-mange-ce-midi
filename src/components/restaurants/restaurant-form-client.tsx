@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { PlaceSuggestion } from "@/hooks/use-places-autocomplete";
-import { LABELS, PRICE_RANGE_LABELS, PRICE_RANGES, RESTAURANT_TYPES } from "@/lib/constants";
+import { LABELS, PRICE_RANGE_DESCRIPTIONS, PRICE_RANGES, RESTAURANT_TYPES } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { SubmitButton } from "../ui/submit-button";
@@ -133,7 +133,7 @@ export function RestaurantFormClient({
 					<option value="" />
 					{PRICE_RANGES.map((range) => (
 						<option key={range} value={range}>
-							{PRICE_RANGE_LABELS[range]}
+							{PRICE_RANGE_DESCRIPTIONS[range]}
 						</option>
 					))}
 				</select>

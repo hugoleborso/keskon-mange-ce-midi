@@ -17,5 +17,5 @@ export const filtersParsers = {
 };
 
 export function useFilters() {
-	return useQueryStates(filtersParsers);
+	return useQueryStates(filtersParsers, { shallow: false });
 }

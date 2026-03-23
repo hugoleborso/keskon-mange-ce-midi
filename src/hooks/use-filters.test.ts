@@ -29,6 +29,10 @@ describe("filtersParsers", () => {
 	});
 });
 
+const { useQueryStates } = (await import("nuqs")) as unknown as {
+	useQueryStates: ReturnType<typeof vi.fn>;
+};
+
 describe("useFilters", () => {
 	it("returns filters state and setter", () => {
 		const { result } = renderHook(() => useFilters());
@@ -36,5 +40,10 @@ describe("useFilters", () => {
 		const [filters, setFilters] = result.current;
 		expect(filters).toEqual({ dineIn: null, takeAway: null, priceRange: null, categoryId: null });
 		expect(setFilters).toBe(mockSetFilters);
+	});
+
+	it("uses shallow: false to trigger server re-renders", () => {
+		renderHook(() => useFilters());
+		expect(useQueryStates).toHaveBeenCalledWith(expect.anything(), { shallow: false });
 	});
 });

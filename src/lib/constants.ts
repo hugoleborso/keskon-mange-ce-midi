@@ -42,8 +42,8 @@ export const PRICE_RANGE_LABELS: Record<PriceRange, string> = {
 
 export const PRICE_RANGE_DESCRIPTIONS: Record<PriceRange, string> = {
 	EUR_1: "€ — moins de 10€",
-	EUR_2: "€€ — 10 a 13€",
-	EUR_3: "€€€ — 13 a 18€",
+	EUR_2: "€€ — 10 à 13€",
+	EUR_3: "€€€ — 13 à 18€",
 	EUR_4: "€€€€ — plus de 18€",
 };
 

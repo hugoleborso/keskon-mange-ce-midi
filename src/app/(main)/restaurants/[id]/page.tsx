@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AttendanceButton } from "@/components/attendance/attendance-button";
+import { NavigateButton } from "@/components/restaurants/navigate-button";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { ReviewList } from "@/components/reviews/review-list";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
@@ -124,14 +125,7 @@ export default async function RestaurantDetailPage({
 					>
 						{m.map_view_on_map()}
 					</Link>
-					<a
-						href={`https://www.google.com/maps/dir/?api=1&destination=${restaurant.latitude},${restaurant.longitude}`}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background hover:bg-foreground/80"
-					>
-						{m.restaurant_navigate()}
-					</a>
+					<NavigateButton latitude={restaurant.latitude} longitude={restaurant.longitude} />
 				</div>
 			)}
 

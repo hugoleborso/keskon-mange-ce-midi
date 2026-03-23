@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
+import { NavigateButton } from "./navigate-button";
 
 export function RestaurantCard({
 	restaurant,
@@ -41,7 +42,12 @@ export function RestaurantCard({
 					</span>
 				</div>
 			</Link>
-			{attendanceSlot && <div className="mt-3 border-t pt-3">{attendanceSlot}</div>}
+			<div className="mt-3 flex items-center gap-2 border-t pt-3">
+				{attendanceSlot}
+				{restaurant.latitude && restaurant.longitude && (
+					<NavigateButton latitude={restaurant.latitude} longitude={restaurant.longitude} />
+				)}
+			</div>
 		</div>
 	);
 }

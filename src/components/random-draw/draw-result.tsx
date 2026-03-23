@@ -3,6 +3,8 @@
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { useEffect } from "react";
+import { AttendanceButton } from "@/components/attendance/attendance-button";
+import { NavigateButton } from "@/components/restaurants/navigate-button";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
@@ -10,9 +12,13 @@ import type { RestaurantWithRating } from "@/server/queries/restaurants";
 export function DrawResult({
 	restaurant,
 	onRedraw,
+	userAttendingId,
+	isAuthenticated,
 }: {
 	restaurant: RestaurantWithRating;
 	onRedraw: () => void;
+	userAttendingId?: string | null;
+	isAuthenticated?: boolean;
 }) {
 	useEffect(() => {
 		const duration = 1500;
@@ -62,6 +68,23 @@ export function DrawResult({
 						</>
 					)}
 				</div>
+			</div>
+			<div className="flex flex-wrap items-center justify-center gap-2">
+				{isAuthenticated && (
+					<AttendanceButton
+						restaurantId={restaurant.id}
+						isAttending={userAttendingId === restaurant.id}
+						isAttendingOther={
+							userAttendingId !== null &&
+							userAttendingId !== undefined &&
+							userAttendingId !== restaurant.id
+						}
+						attendees={[]}
+					/>
+				)}
+				{restaurant.latitude && restaurant.longitude && (
+					<NavigateButton latitude={restaurant.latitude} longitude={restaurant.longitude} />
+				)}
 			</div>
 			<div className="flex gap-2">
 				<Link

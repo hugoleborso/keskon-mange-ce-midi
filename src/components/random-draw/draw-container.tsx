@@ -19,7 +19,15 @@ function shuffle<T>(array: T[]): T[] {
 	return shuffled;
 }
 
-export function DrawContainer({ restaurants }: { restaurants: RestaurantWithRating[] }) {
+export function DrawContainer({
+	restaurants,
+	userAttendingId,
+	isAuthenticated,
+}: {
+	restaurants: RestaurantWithRating[];
+	userAttendingId?: string | null;
+	isAuthenticated?: boolean;
+}) {
 	const [state, setState] = useState<DrawState>("idle");
 	const [winner, setWinner] = useState<RestaurantWithRating | null>(null);
 	const { flyTo, setSelectedId, setHighlightedId } = useMapContext();
@@ -85,7 +93,14 @@ export function DrawContainer({ restaurants }: { restaurants: RestaurantWithRati
 					onCurrentNameChange={handleCurrentNameChange}
 				/>
 			)}
-			{state === "result" && winner && <DrawResult restaurant={winner} onRedraw={handleRedraw} />}
+			{state === "result" && winner && (
+				<DrawResult
+					restaurant={winner}
+					onRedraw={handleRedraw}
+					userAttendingId={userAttendingId}
+					isAuthenticated={isAuthenticated}
+				/>
+			)}
 		</div>
 	);
 }

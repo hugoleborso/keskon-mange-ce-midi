@@ -83,7 +83,11 @@ export default async function HomePage({
 					isAuthenticated={!!session?.user}
 				/>
 				<div className="sticky bottom-0 mt-4 bg-background pb-4 pt-2">
-					<DrawContainer restaurants={restaurants} />
+					<DrawContainer
+						restaurants={restaurants}
+						userAttendingId={userAttendingId}
+						isAuthenticated={!!session?.user}
+					/>
 				</div>
 			</div>
 		</main>

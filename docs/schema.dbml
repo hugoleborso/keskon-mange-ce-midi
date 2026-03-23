@@ -11,6 +11,11 @@ enum restaurant_status {
   permanently_closed
 }
 
+enum user_role {
+  user
+  admin
+}
+
 table accounts {
   user_id text [not null]
   type text [not null]
@@ -29,6 +34,14 @@ table accounts {
   }
 }
 
+table categories {
+  id text [pk, not null]
+  name text [not null, unique]
+  slug text [not null, unique]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+}
+
 table favorites {
   user_id text [not null]
   restaurant_id text [not null]
@@ -36,6 +49,26 @@ table favorites {
 
   indexes {
     (user_id, restaurant_id) [pk]
+  }
+}
+
+table lunch_attendance {
+  user_id text [not null]
+  restaurant_id text [not null]
+  date text [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (user_id, date) [pk]
+  }
+}
+
+table restaurant_categories {
+  restaurant_id text [not null]
+  category_id text [not null]
+
+  indexes {
+    (restaurant_id, category_id) [pk]
   }
 }
 
@@ -55,6 +88,16 @@ table restaurants {
   created_by text [not null]
   created_at timestamp [not null, default: `now()`]
   updated_at timestamp [not null, default: `now()`]
+}
+
+table review_likes {
+  user_id text [not null]
+  review_id text [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (user_id, review_id) [pk]
+  }
 }
 
 table reviews {
@@ -84,6 +127,7 @@ table users {
   email text [not null, unique]
   email_verified timestamp
   image text
+  role user_role [not null, default: 'user']
 }
 
 table verification_tokens {
@@ -102,7 +146,19 @@ ref favorites_user_id_users_id_fk: favorites.user_id > users.id [delete: cascade
 
 ref favorites_restaurant_id_restaurants_id_fk: favorites.restaurant_id > restaurants.id [delete: cascade, update: no action]
 
+ref lunch_attendance_user_id_users_id_fk: lunch_attendance.user_id > users.id [delete: cascade, update: no action]
+
+ref lunch_attendance_restaurant_id_restaurants_id_fk: lunch_attendance.restaurant_id > restaurants.id [delete: cascade, update: no action]
+
+ref restaurant_categories_restaurant_id_restaurants_id_fk: restaurant_categories.restaurant_id > restaurants.id [delete: cascade, update: no action]
+
+ref restaurant_categories_category_id_categories_id_fk: restaurant_categories.category_id > categories.id [delete: cascade, update: no action]
+
 ref restaurants_created_by_users_id_fk: restaurants.created_by > users.id [delete: no action, update: no action]
+
+ref review_likes_user_id_users_id_fk: review_likes.user_id > users.id [delete: cascade, update: no action]
+
+ref review_likes_review_id_reviews_id_fk: review_likes.review_id > reviews.id [delete: cascade, update: no action]
 
 ref reviews_restaurant_id_restaurants_id_fk: reviews.restaurant_id > restaurants.id [delete: cascade, update: no action]
 

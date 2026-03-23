@@ -1,7 +1,7 @@
 import { and, avg, count, eq, inArray } from "drizzle-orm";
 import type { PriceRange } from "@/lib/constants";
 import { db } from "../db";
-import { restaurants, reviews } from "../db/schema";
+import { restaurantCategories, restaurants, reviews } from "../db/schema";
 
 export type RestaurantWithRating = typeof restaurants.$inferSelect & {
 	averageRating: number | null;
@@ -22,6 +22,7 @@ export async function getRestaurants(filters?: {
 	dineIn?: boolean;
 	takeAway?: boolean;
 	priceRange?: PriceRange[];
+	categoryId?: string;
 	status?: string;
 }): Promise<RestaurantWithRating[]> {
 	const conditions = [eq(restaurants.status, "active")];
@@ -34,6 +35,13 @@ export async function getRestaurants(filters?: {
 	}
 	if (filters?.priceRange && filters.priceRange.length > 0) {
 		conditions.push(inArray(restaurants.priceRange, filters.priceRange));
+	}
+	if (filters?.categoryId) {
+		const restaurantIdsWithCategory = db
+			.select({ restaurantId: restaurantCategories.restaurantId })
+			.from(restaurantCategories)
+			.where(eq(restaurantCategories.categoryId, filters.categoryId));
+		conditions.push(inArray(restaurants.id, restaurantIdsWithCategory));
 	}
 
 	const rows = await db
@@ -74,4 +82,13 @@ export async function getRestaurantById(id: string): Promise<RestaurantWithRatin
 		averageRating: row.averageRating ?? null,
 		reviewsCount: row.reviewsCount ?? 0,
 	};
+}
+
+export async function getRestaurantCategoryIds(restaurantId: string): Promise<string[]> {
+	const rows = await db
+		.select({ categoryId: restaurantCategories.categoryId })
+		.from(restaurantCategories)
+		.where(eq(restaurantCategories.restaurantId, restaurantId));
+
+	return rows.map((r) => r.categoryId);
 }

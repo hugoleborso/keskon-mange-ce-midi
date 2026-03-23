@@ -21,21 +21,30 @@ vi.mock("../auth", () => ({
 
 // Mock db with chainable insert/update builder
 const mockReturning = vi.fn();
-const mockInsertValues = vi.fn(() => ({ returning: mockReturning }));
+const mockInsertValues = vi.fn(() => {
+	const result = Promise.resolve(undefined);
+	(result as unknown as Record<string, unknown>).returning = mockReturning;
+	return result;
+});
 const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
 const mockUpdateWhere = vi.fn();
 const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }));
 const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }));
 
+const mockDeleteWhere = vi.fn();
+const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }));
+
 vi.mock("../db", () => ({
 	db: {
 		insert: mockInsert,
 		update: mockUpdate,
+		delete: mockDelete,
 	},
 }));
 
 vi.mock("../db/schema", () => ({
 	restaurants: { id: "id" },
+	restaurantCategories: { restaurantId: "restaurant_id", categoryId: "category_id" },
 }));
 
 type MockFn = ReturnType<typeof vi.fn>;
@@ -88,7 +97,7 @@ describe("createRestaurant", () => {
 		geocodeAddress.mockResolvedValueOnce(null);
 
 		await expect(
-			createRestaurant(makeFormData({ name: "Test", address: "unknown" })),
+			createRestaurant(makeFormData({ name: "Test", address: "unknown", priceRange: "EUR_1" })),
 		).rejects.toThrow("Adresse introuvable");
 	});
 
@@ -105,6 +114,7 @@ describe("createRestaurant", () => {
 			makeFormData({
 				name: "Chez Luigi",
 				address: "12 rue de la Paix",
+				priceRange: "EUR_2",
 				dineIn: "on",
 			}),
 		);
@@ -128,6 +138,75 @@ describe("createRestaurant", () => {
 
 		await expect(createRestaurant(makeFormData({ name: "", address: "12 rue" }))).rejects.toThrow();
 	});
+
+	it("uses Places API coordinates when provided", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		mockReturning.mockResolvedValueOnce([{ id: "new-id" }]);
+
+		await createRestaurant(
+			makeFormData({
+				name: "Test Place",
+				address: "123 Test St",
+				priceRange: "EUR_1",
+				latitude: "48.85",
+				longitude: "2.35",
+				dineIn: "on",
+			}),
+		);
+
+		expect(geocodeAddress).not.toHaveBeenCalled();
+		expect(mockInsertValues).toHaveBeenCalledWith(
+			expect.objectContaining({
+				latitude: 48.85,
+				longitude: 2.35,
+			}),
+		);
+	});
+
+	it("creates restaurant with categories", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		geocodeAddress.mockResolvedValueOnce({
+			latitude: 48.85,
+			longitude: 2.35,
+			displayName: "Paris",
+		});
+		mockReturning.mockResolvedValueOnce([{ id: "new-id" }]);
+
+		const fd = new FormData();
+		fd.set("name", "Test Place");
+		fd.set("address", "123 Test St");
+		fd.set("priceRange", "EUR_1");
+		fd.set("dineIn", "on");
+		fd.append("categoryIds", "550e8400-e29b-41d4-a716-446655440000");
+		fd.append("categoryIds", "660e8400-e29b-41d4-a716-446655440000");
+
+		await createRestaurant(fd);
+
+		expect(mockInsertValues).toHaveBeenCalledTimes(2);
+	});
+
+	it("ignores invalid coordinate values and falls back to geocoding", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		geocodeAddress.mockResolvedValueOnce({
+			latitude: 48.85,
+			longitude: 2.35,
+			displayName: "Paris",
+		});
+		mockReturning.mockResolvedValueOnce([{ id: "new-id" }]);
+
+		await createRestaurant(
+			makeFormData({
+				name: "Test",
+				address: "12 rue",
+				priceRange: "EUR_1",
+				latitude: "invalid",
+				longitude: "2.35",
+				dineIn: "on",
+			}),
+		);
+
+		expect(geocodeAddress).toHaveBeenCalled();
+	});
 });
 
 describe("updateRestaurant", () => {
@@ -144,6 +223,7 @@ describe("updateRestaurant", () => {
 					id: "550e8400-e29b-41d4-a716-446655440000",
 					name: "Test",
 					address: "12 rue",
+					priceRange: "EUR_1",
 				}),
 			),
 		).rejects.toThrow("Non authentifie");
@@ -159,6 +239,7 @@ describe("updateRestaurant", () => {
 					id: "550e8400-e29b-41d4-a716-446655440000",
 					name: "Test",
 					address: "nowhere",
+					priceRange: "EUR_1",
 				}),
 			),
 		).rejects.toThrow("Adresse introuvable");
@@ -179,6 +260,7 @@ describe("updateRestaurant", () => {
 				id,
 				name: "Updated Name",
 				address: "New Address",
+				priceRange: "EUR_2",
 				takeAway: "on",
 			}),
 		);
@@ -197,11 +279,62 @@ describe("updateRestaurant", () => {
 		expect(redirect).toHaveBeenCalledWith(`/restaurants/${id}`);
 	});
 
+	it("updates restaurant with categories", async () => {
+		const id = "550e8400-e29b-41d4-a716-446655440000";
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		geocodeAddress.mockResolvedValueOnce({
+			latitude: 48.85,
+			longitude: 2.35,
+			displayName: "Paris",
+		});
+		mockUpdateWhere.mockResolvedValueOnce(undefined);
+		mockDeleteWhere.mockResolvedValueOnce(undefined);
+
+		const fd = new FormData();
+		fd.set("id", id);
+		fd.set("name", "Updated");
+		fd.set("address", "New Address");
+		fd.set("priceRange", "EUR_2");
+		fd.set("dineIn", "on");
+		fd.append("categoryIds", "550e8400-e29b-41d4-a716-446655440000");
+
+		await updateRestaurant(fd);
+
+		expect(mockDeleteWhere).toHaveBeenCalled();
+		expect(mockInsertValues).toHaveBeenCalled();
+	});
+
 	it("throws on invalid UUID", async () => {
 		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
 
 		await expect(
 			updateRestaurant(makeFormData({ id: "not-a-uuid", name: "Test", address: "12 rue" })),
 		).rejects.toThrow();
+	});
+
+	it("uses Places API coordinates when provided", async () => {
+		const id = "550e8400-e29b-41d4-a716-446655440000";
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		mockUpdateWhere.mockResolvedValueOnce(undefined);
+
+		await updateRestaurant(
+			makeFormData({
+				id,
+				name: "Updated",
+				address: "New Address",
+				priceRange: "EUR_1",
+				latitude: "48.85",
+				longitude: "2.35",
+				takeAway: "on",
+			}),
+		);
+
+		expect(geocodeAddress).not.toHaveBeenCalled();
+		expect(mockUpdateSet).toHaveBeenCalledWith(
+			expect.objectContaining({
+				latitude: 48.85,
+				longitude: 2.35,
+			}),
+		);
 	});
 });

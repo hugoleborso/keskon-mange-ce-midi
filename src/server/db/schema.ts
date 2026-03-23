@@ -20,6 +20,8 @@ export const restaurantStatusEnum = pgEnum("restaurant_status", [
 	"permanently_closed",
 ]);
 
+export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
+
 // ─── Auth.js tables ──────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -30,6 +32,7 @@ export const users = pgTable("users", {
 	email: text("email").unique().notNull(),
 	emailVerified: timestamp("email_verified", { mode: "date" }),
 	image: text("image"),
+	role: userRoleEnum("role").default("user").notNull(),
 });
 
 export const accounts = pgTable(
@@ -72,6 +75,16 @@ export const verificationTokens = pgTable(
 
 // ─── App tables ──────────────────────────────────────────
 
+export const categories = pgTable("categories", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	name: text("name").unique().notNull(),
+	slug: text("slug").unique().notNull(),
+	createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
 export const restaurants = pgTable("restaurants", {
 	id: text("id")
 		.primaryKey()
@@ -94,6 +107,19 @@ export const restaurants = pgTable("restaurants", {
 	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
 
+export const restaurantCategories = pgTable(
+	"restaurant_categories",
+	{
+		restaurantId: text("restaurant_id")
+			.notNull()
+			.references(() => restaurants.id, { onDelete: "cascade" }),
+		categoryId: text("category_id")
+			.notNull()
+			.references(() => categories.id, { onDelete: "cascade" }),
+	},
+	(table) => [primaryKey({ columns: [table.restaurantId, table.categoryId] })],
+);
+
 export const reviews = pgTable(
 	"reviews",
 	{
@@ -113,6 +139,35 @@ export const reviews = pgTable(
 		updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 	},
 	(table) => [unique().on(table.restaurantId, table.authorId)],
+);
+
+export const lunchAttendance = pgTable(
+	"lunch_attendance",
+	{
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		restaurantId: text("restaurant_id")
+			.notNull()
+			.references(() => restaurants.id, { onDelete: "cascade" }),
+		date: text("date").notNull(),
+		createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+	},
+	(table) => [primaryKey({ columns: [table.userId, table.date] })],
+);
+
+export const reviewLikes = pgTable(
+	"review_likes",
+	{
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		reviewId: text("review_id")
+			.notNull()
+			.references(() => reviews.id, { onDelete: "cascade" }),
+		createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+	},
+	(table) => [primaryKey({ columns: [table.userId, table.reviewId] })],
 );
 
 export const favorites = pgTable(

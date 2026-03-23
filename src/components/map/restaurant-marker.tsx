@@ -6,18 +6,43 @@ import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { MapPopup } from "./map-popup";
 
 function ratingColor(rating: number | null): string {
-	if (rating === null) return "#94a3b8"; // slate-400
-	if (rating >= 4) return "#10b981"; // emerald-500
-	if (rating >= 3) return "#f59e0b"; // amber-500
-	return "#ef4444"; // red-500
+	if (rating === null) return "#94a3b8"; // grey for no ratings
+
+	// Smooth gradient: 1=red, 2.5=orange, 3=yellow, 4=light green, 5=green
+	const stops = [
+		{ at: 1, r: 239, g: 68, b: 68 }, // red
+		{ at: 2.5, r: 245, g: 158, b: 11 }, // orange/amber
+		{ at: 3, r: 234, g: 179, b: 8 }, // yellow
+		{ at: 4, r: 132, g: 204, b: 22 }, // lime
+		{ at: 5, r: 34, g: 197, b: 94 }, // green
+	];
+
+	const clamped = Math.max(1, Math.min(5, rating));
+
+	let lower = stops[0];
+	let upper = stops[stops.length - 1];
+	for (let i = 0; i < stops.length - 1; i++) {
+		if (clamped >= stops[i].at && clamped <= stops[i + 1].at) {
+			lower = stops[i];
+			upper = stops[i + 1];
+			break;
+		}
+	}
+
+	const t = upper.at === lower.at ? 0 : (clamped - lower.at) / (upper.at - lower.at);
+	const r = Math.round(lower.r + (upper.r - lower.r) * t);
+	const g = Math.round(lower.g + (upper.g - lower.g) * t);
+	const b = Math.round(lower.b + (upper.b - lower.b) * t);
+
+	return `rgb(${r}, ${g}, ${b})`;
 }
 
-function createIcon(rating: number | null, isSelected: boolean) {
+function createIcon(rating: number | null, isSelected: boolean, isHighlighted: boolean) {
 	const color = ratingColor(rating);
 	const label = rating !== null ? rating.toFixed(1) : "—";
-	const size = isSelected ? 44 : 36;
-	const fontSize = isSelected ? 13 : 11;
-	const borderWidth = isSelected ? 3 : 2;
+	const size = isHighlighted ? 52 : isSelected ? 44 : 36;
+	const fontSize = isHighlighted ? 15 : isSelected ? 13 : 11;
+	const borderWidth = isHighlighted ? 4 : isSelected ? 3 : 2;
 
 	return L.divIcon({
 		className: "",
@@ -45,7 +70,7 @@ function createIcon(rating: number | null, isSelected: boolean) {
 				font-family: system-ui, sans-serif;
 				letter-spacing: -0.02em;
 				transition: transform 0.2s ease;
-				${isSelected ? "transform: scale(1.1);" : ""}
+				${isHighlighted ? "transform: scale(1.3);" : isSelected ? "transform: scale(1.1);" : ""}
 			">${label}</div>
 			<div style="
 				width: 0;
@@ -62,15 +87,17 @@ function createIcon(rating: number | null, isSelected: boolean) {
 export function RestaurantMarker({
 	restaurant,
 	isSelected,
+	isHighlighted = false,
 	onSelect,
 }: {
 	restaurant: RestaurantWithRating;
 	isSelected: boolean;
+	isHighlighted?: boolean;
 	onSelect: (id: string) => void;
 }) {
 	if (!restaurant.latitude || !restaurant.longitude) return null;
 
-	const icon = createIcon(restaurant.averageRating, isSelected);
+	const icon = createIcon(restaurant.averageRating, isSelected, isHighlighted);
 
 	return (
 		<Marker
@@ -79,7 +106,7 @@ export function RestaurantMarker({
 			eventHandlers={{
 				click: () => onSelect(restaurant.id),
 			}}
-			zIndexOffset={isSelected ? 1000 : 0}
+			zIndexOffset={isHighlighted ? 2000 : isSelected ? 1000 : 0}
 		>
 			<MapPopup restaurant={restaurant} />
 		</Marker>

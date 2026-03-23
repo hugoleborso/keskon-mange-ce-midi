@@ -1,15 +1,35 @@
 import Link from "next/link";
+import { AttendanceButton } from "@/components/attendance/attendance-button";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { RestaurantCard } from "@/components/restaurants/restaurant-card";
 import * as m from "@/paraglide/messages.js";
 import { auth } from "@/server/auth";
+import {
+	getAllAttendanceForDate,
+	getTodayDateString,
+	getUserAttendance,
+} from "@/server/queries/attendance";
 import { getUserFavoriteRestaurants } from "@/server/queries/favorites";
 
 export default async function FavoritesPage() {
 	const session = await auth();
 	if (!session?.user?.id) return null;
 
-	const restaurants = await getUserFavoriteRestaurants(session.user.id);
+	const today = getTodayDateString();
+
+	const [restaurants, attendanceMap, userAttendingId] = await Promise.all([
+		getUserFavoriteRestaurants(session.user.id),
+		getAllAttendanceForDate(today),
+		getUserAttendance(session.user.id, today),
+	]);
+
+	const attendanceData: Record<
+		string,
+		{ userId: string; name: string | null; image: string | null }[]
+	> = {};
+	for (const [restaurantId, users] of attendanceMap) {
+		attendanceData[restaurantId] = users;
+	}
 
 	return (
 		<main className="mx-auto max-w-2xl p-4">
@@ -28,6 +48,18 @@ export default async function FavoritesPage() {
 							key={restaurant.id}
 							restaurant={restaurant}
 							favoriteButton={<FavoriteButton restaurantId={restaurant.id} isFavorite />}
+							attendanceSlot={
+								<AttendanceButton
+									restaurantId={restaurant.id}
+									isAttending={userAttendingId === restaurant.id}
+									isAttendingOther={
+										userAttendingId !== null &&
+										userAttendingId !== undefined &&
+										userAttendingId !== restaurant.id
+									}
+									attendees={attendanceData[restaurant.id] ?? []}
+								/>
+							}
 						/>
 					))}
 				</div>

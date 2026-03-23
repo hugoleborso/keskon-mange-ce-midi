@@ -1,11 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AttendanceButton } from "@/components/attendance/attendance-button";
+import { NavigateButton } from "@/components/restaurants/navigate-button";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { ReviewList } from "@/components/reviews/review-list";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import { auth } from "@/server/auth";
+import {
+	getRestaurantAttendance,
+	getTodayDateString,
+	getUserAttendance,
+} from "@/server/queries/attendance";
 import { getRestaurantById } from "@/server/queries/restaurants";
+import { getReviewLikeCounts, getUserReviewLikes } from "@/server/queries/review-likes";
 import { getReviewsByRestaurant, getUserReview } from "@/server/queries/reviews";
 
 export default async function RestaurantDetailPage({
@@ -18,10 +27,23 @@ export default async function RestaurantDetailPage({
 
 	if (!restaurant) notFound();
 
-	const [reviews, userReview] = await Promise.all([
+	const today = getTodayDateString();
+
+	const [reviews, userReview, attendees, userAttendingId] = await Promise.all([
 		getReviewsByRestaurant(id),
 		session?.user?.id ? getUserReview(id, session.user.id) : null,
+		getRestaurantAttendance(id, today),
+		session?.user?.id ? getUserAttendance(session.user.id, today) : null,
 	]);
+
+	const reviewIds = reviews.map((r) => r.id);
+	const [likeCounts, userLikes] = await Promise.all([
+		getReviewLikeCounts(reviewIds),
+		session?.user?.id ? getUserReviewLikes(session.user.id, reviewIds) : new Set<string>(),
+	]);
+
+	// Collect all photos from reviews for a gallery
+	const allPhotos = reviews.flatMap((r) => r.photoUrls ?? []);
 
 	return (
 		<main className="mx-auto max-w-2xl p-4">
@@ -41,6 +63,20 @@ export default async function RestaurantDetailPage({
 					{m.restaurant_edit()}
 				</Link>
 			</div>
+
+			{/* Attendance */}
+			{session?.user && (
+				<div className="mt-4">
+					<AttendanceButton
+						restaurantId={id}
+						isAttending={userAttendingId === id}
+						isAttendingOther={
+							userAttendingId !== null && userAttendingId !== undefined && userAttendingId !== id
+						}
+						attendees={attendees}
+					/>
+				</div>
+			)}
 
 			<div className="mt-4 flex flex-wrap gap-2">
 				{restaurant.restaurantType && (
@@ -82,22 +118,50 @@ export default async function RestaurantDetailPage({
 			</div>
 
 			{restaurant.latitude && restaurant.longitude && (
-				<Link
-					href={`/?selected=${restaurant.id}`}
-					className="mt-3 inline-block text-sm text-primary hover:underline"
-				>
-					{m.map_view_on_map()}
-				</Link>
+				<div className="mt-3 flex items-center gap-3">
+					<Link
+						href={`/?selected=${restaurant.id}`}
+						className="text-sm text-primary hover:underline"
+					>
+						{m.map_view_on_map()}
+					</Link>
+					<NavigateButton latitude={restaurant.latitude} longitude={restaurant.longitude} />
+				</div>
+			)}
+
+			{/* Photo gallery */}
+			{allPhotos.length > 0 && (
+				<section className="mt-6">
+					<h2 className="mb-3 text-lg font-semibold">{m.restaurant_gallery()}</h2>
+					<div className="flex flex-wrap gap-2">
+						{allPhotos.map((url) => (
+							<Image
+								key={url}
+								src={url}
+								alt=""
+								width={160}
+								height={160}
+								className="rounded-md object-cover"
+								style={{ width: 160, height: 160 }}
+							/>
+						))}
+					</div>
+				</section>
 			)}
 
 			<section className="mt-8">
 				<h2 className="mb-4 text-lg font-semibold">{m.review_section_title()}</h2>
-				{session?.user && (
+				{session?.user && !userReview && (
 					<div className="mb-6">
-						<ReviewForm restaurantId={id} existingReview={userReview} />
+						<ReviewForm restaurantId={id} />
 					</div>
 				)}
-				<ReviewList reviews={reviews} currentUserId={session?.user?.id} />
+				<ReviewList
+					reviews={reviews}
+					currentUserId={session?.user?.id}
+					likeCounts={likeCounts}
+					userLikes={userLikes}
+				/>
 			</section>
 		</main>
 	);

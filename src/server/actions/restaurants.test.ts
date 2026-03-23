@@ -163,6 +163,28 @@ describe("createRestaurant", () => {
 		);
 	});
 
+	it("creates restaurant with categories", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		geocodeAddress.mockResolvedValueOnce({
+			latitude: 48.85,
+			longitude: 2.35,
+			displayName: "Paris",
+		});
+		mockReturning.mockResolvedValueOnce([{ id: "new-id" }]);
+
+		const fd = new FormData();
+		fd.set("name", "Test Place");
+		fd.set("address", "123 Test St");
+		fd.set("priceRange", "EUR_1");
+		fd.set("dineIn", "on");
+		fd.append("categoryIds", "550e8400-e29b-41d4-a716-446655440000");
+		fd.append("categoryIds", "660e8400-e29b-41d4-a716-446655440000");
+
+		await createRestaurant(fd);
+
+		expect(mockInsertValues).toHaveBeenCalledTimes(2);
+	});
+
 	it("ignores invalid coordinate values and falls back to geocoding", async () => {
 		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
 		geocodeAddress.mockResolvedValueOnce({
@@ -255,6 +277,31 @@ describe("updateRestaurant", () => {
 		expect(revalidatePath).toHaveBeenCalledWith("/");
 		expect(revalidatePath).toHaveBeenCalledWith(`/restaurants/${id}`);
 		expect(redirect).toHaveBeenCalledWith(`/restaurants/${id}`);
+	});
+
+	it("updates restaurant with categories", async () => {
+		const id = "550e8400-e29b-41d4-a716-446655440000";
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		geocodeAddress.mockResolvedValueOnce({
+			latitude: 48.85,
+			longitude: 2.35,
+			displayName: "Paris",
+		});
+		mockUpdateWhere.mockResolvedValueOnce(undefined);
+		mockDeleteWhere.mockResolvedValueOnce(undefined);
+
+		const fd = new FormData();
+		fd.set("id", id);
+		fd.set("name", "Updated");
+		fd.set("address", "New Address");
+		fd.set("priceRange", "EUR_2");
+		fd.set("dineIn", "on");
+		fd.append("categoryIds", "550e8400-e29b-41d4-a716-446655440000");
+
+		await updateRestaurant(fd);
+
+		expect(mockDeleteWhere).toHaveBeenCalled();
+		expect(mockInsertValues).toHaveBeenCalled();
 	});
 
 	it("throws on invalid UUID", async () => {

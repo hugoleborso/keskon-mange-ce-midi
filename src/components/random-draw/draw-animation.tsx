@@ -3,7 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import * as m from "@/paraglide/messages.js";
 
-export function DrawAnimation({ names, onComplete }: { names: string[]; onComplete: () => void }) {
+export function DrawAnimation({
+	names,
+	onComplete,
+	onCurrentNameChange,
+}: {
+	names: string[];
+	onComplete: () => void;
+	onCurrentNameChange?: (name: string) => void;
+}) {
 	const [displayNames, setDisplayNames] = useState<string[]>([]);
 	const [offset, setOffset] = useState(0);
 	const [phase, setPhase] = useState<"spinning" | "decelerating" | "done">("spinning");
@@ -73,6 +81,16 @@ export function DrawAnimation({ names, onComplete }: { names: string[]; onComple
 
 	const itemHeight = 48;
 	const currentPixelOffset = offset * itemHeight;
+
+	// Report the name currently at the center of the reel
+	const centerIndex = Math.round(offset) + 1;
+	const currentName = displayNames[centerIndex % displayNames.length];
+
+	useEffect(() => {
+		if (currentName && phase !== "done") {
+			onCurrentNameChange?.(currentName);
+		}
+	}, [currentName, phase, onCurrentNameChange]);
 
 	return (
 		<div className="relative overflow-hidden rounded-xl bg-muted">

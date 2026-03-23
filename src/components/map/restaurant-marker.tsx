@@ -12,12 +12,12 @@ function ratingColor(rating: number | null): string {
 	return "#ef4444"; // red-500
 }
 
-function createIcon(rating: number | null, isSelected: boolean) {
+function createIcon(rating: number | null, isSelected: boolean, isHighlighted: boolean) {
 	const color = ratingColor(rating);
 	const label = rating !== null ? rating.toFixed(1) : "—";
-	const size = isSelected ? 44 : 36;
-	const fontSize = isSelected ? 13 : 11;
-	const borderWidth = isSelected ? 3 : 2;
+	const size = isHighlighted ? 52 : isSelected ? 44 : 36;
+	const fontSize = isHighlighted ? 15 : isSelected ? 13 : 11;
+	const borderWidth = isHighlighted ? 4 : isSelected ? 3 : 2;
 
 	return L.divIcon({
 		className: "",
@@ -45,7 +45,7 @@ function createIcon(rating: number | null, isSelected: boolean) {
 				font-family: system-ui, sans-serif;
 				letter-spacing: -0.02em;
 				transition: transform 0.2s ease;
-				${isSelected ? "transform: scale(1.1);" : ""}
+				${isHighlighted ? "transform: scale(1.3);" : isSelected ? "transform: scale(1.1);" : ""}
 			">${label}</div>
 			<div style="
 				width: 0;
@@ -62,15 +62,17 @@ function createIcon(rating: number | null, isSelected: boolean) {
 export function RestaurantMarker({
 	restaurant,
 	isSelected,
+	isHighlighted = false,
 	onSelect,
 }: {
 	restaurant: RestaurantWithRating;
 	isSelected: boolean;
+	isHighlighted?: boolean;
 	onSelect: (id: string) => void;
 }) {
 	if (!restaurant.latitude || !restaurant.longitude) return null;
 
-	const icon = createIcon(restaurant.averageRating, isSelected);
+	const icon = createIcon(restaurant.averageRating, isSelected, isHighlighted);
 
 	return (
 		<Marker
@@ -79,7 +81,7 @@ export function RestaurantMarker({
 			eventHandlers={{
 				click: () => onSelect(restaurant.id),
 			}}
-			zIndexOffset={isSelected ? 1000 : 0}
+			zIndexOffset={isHighlighted ? 2000 : isSelected ? 1000 : 0}
 		>
 			<MapPopup restaurant={restaurant} />
 		</Marker>

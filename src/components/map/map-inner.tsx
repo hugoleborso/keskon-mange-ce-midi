@@ -11,7 +11,7 @@ const DEFAULT_CENTER = { lat: 48.8834, lng: 2.3244 }; // 48 boulevard des Batign
 const DEFAULT_ZOOM = 15; // ~1km radius
 
 export function MapInner({ restaurants }: { restaurants: RestaurantWithRating[] }) {
-	const { selectedId, setSelectedId, registerMap } = useMapContext();
+	const { selectedId, setSelectedId, highlightedId, registerMap } = useMapContext();
 	const mapRef = useRef<LeafletMap | null>(null);
 
 	useEffect(() => {
@@ -48,6 +48,7 @@ export function MapInner({ restaurants }: { restaurants: RestaurantWithRating[] 
 					key={restaurant.id}
 					restaurant={restaurant}
 					isSelected={selectedId === restaurant.id}
+					isHighlighted={highlightedId === restaurant.id}
 					onSelect={setSelectedId}
 				/>
 			))}

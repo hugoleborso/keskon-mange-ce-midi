@@ -22,9 +22,17 @@ function shuffle<T>(array: T[]): T[] {
 export function DrawContainer({ restaurants }: { restaurants: RestaurantWithRating[] }) {
 	const [state, setState] = useState<DrawState>("idle");
 	const [winner, setWinner] = useState<RestaurantWithRating | null>(null);
-	const { flyTo, setSelectedId } = useMapContext();
+	const { flyTo, setSelectedId, setHighlightedId } = useMapContext();
 
 	const shuffledNames = useMemo(() => shuffle(restaurants.map((r) => r.name)), [restaurants]);
+
+	const nameToId = useMemo(() => {
+		const map = new Map<string, string>();
+		for (const r of restaurants) {
+			map.set(r.name, r.id);
+		}
+		return map;
+	}, [restaurants]);
 
 	const startDraw = useCallback(() => {
 		if (restaurants.length === 0) return;
@@ -34,18 +42,30 @@ export function DrawContainer({ restaurants }: { restaurants: RestaurantWithRati
 		setState("animating");
 	}, [restaurants]);
 
+	const handleCurrentNameChange = useCallback(
+		(name: string) => {
+			const id = nameToId.get(name);
+			if (id) {
+				setHighlightedId(id);
+			}
+		},
+		[nameToId, setHighlightedId],
+	);
+
 	const handleAnimationComplete = useCallback(() => {
 		setState("result");
+		setHighlightedId(null);
 		if (winner?.latitude && winner?.longitude) {
 			flyTo(winner.latitude, winner.longitude);
 			setSelectedId(winner.id);
 		}
-	}, [winner, flyTo, setSelectedId]);
+	}, [winner, flyTo, setSelectedId, setHighlightedId]);
 
 	const handleRedraw = useCallback(() => {
 		setState("idle");
 		setWinner(null);
-	}, []);
+		setHighlightedId(null);
+	}, [setHighlightedId]);
 
 	if (restaurants.length === 0) {
 		return (
@@ -59,7 +79,11 @@ export function DrawContainer({ restaurants }: { restaurants: RestaurantWithRati
 		<div className="space-y-3">
 			{state === "idle" && <DrawButton onDraw={startDraw} disabled={restaurants.length === 0} />}
 			{state === "animating" && (
-				<DrawAnimation names={shuffledNames} onComplete={handleAnimationComplete} />
+				<DrawAnimation
+					names={shuffledNames}
+					onComplete={handleAnimationComplete}
+					onCurrentNameChange={handleCurrentNameChange}
+				/>
 			)}
 			{state === "result" && winner && <DrawResult restaurant={winner} onRedraw={handleRedraw} />}
 		</div>

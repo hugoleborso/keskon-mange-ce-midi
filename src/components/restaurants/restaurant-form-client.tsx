@@ -1,24 +1,60 @@
+"use client";
+
+import { useRef, useState } from "react";
+import type { PlaceSuggestion } from "@/hooks/use-places-autocomplete";
 import { LABELS, PRICE_RANGE_LABELS, PRICE_RANGES, RESTAURANT_TYPES } from "@/lib/constants";
 import * as m from "@/paraglide/messages.js";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { SubmitButton } from "../ui/submit-button";
+import { AddressAutocomplete } from "./address-autocomplete";
 
-export function RestaurantForm({
+type Category = { id: string; name: string };
+
+export function RestaurantFormClient({
 	action,
 	restaurant,
+	categories,
 }: {
 	action: (formData: FormData) => Promise<void>;
 	restaurant?: RestaurantWithRating;
+	categories?: Category[];
 }) {
+	const hasCategories = categories && categories.length > 0;
+	const [placeData, setPlaceData] = useState<{
+		name: string;
+		latitude: number;
+		longitude: number;
+	} | null>(null);
+	const nameInputRef = useRef<HTMLInputElement>(null);
+
+	const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
+		setPlaceData({
+			name: suggestion.displayName,
+			latitude: suggestion.latitude,
+			longitude: suggestion.longitude,
+		});
+		// Auto-fill name if empty
+		if (nameInputRef.current && !nameInputRef.current.value) {
+			nameInputRef.current.value = suggestion.displayName;
+		}
+	};
+
 	return (
 		<form action={action} className="grid gap-4">
 			{restaurant && <input type="hidden" name="id" value={restaurant.id} />}
+			{placeData && (
+				<>
+					<input type="hidden" name="latitude" value={placeData.latitude} />
+					<input type="hidden" name="longitude" value={placeData.longitude} />
+				</>
+			)}
 
 			<div className="grid gap-1.5">
 				<label htmlFor="name" className="text-sm font-medium">
 					{m.restaurant_name()}
 				</label>
 				<input
+					ref={nameInputRef}
 					id="name"
 					name="name"
 					type="text"
@@ -32,34 +68,48 @@ export function RestaurantForm({
 				<label htmlFor="address" className="text-sm font-medium">
 					{m.restaurant_address()}
 				</label>
-				<input
-					id="address"
-					name="address"
-					type="text"
-					required
-					defaultValue={restaurant?.address}
-					className="rounded-md border px-3 py-2"
-				/>
+				<AddressAutocomplete defaultValue={restaurant?.address} onSelect={handlePlaceSelect} />
 			</div>
 
-			<div className="grid gap-1.5">
-				<label htmlFor="restaurantType" className="text-sm font-medium">
-					{m.restaurant_type()}
-				</label>
-				<select
-					id="restaurantType"
-					name="restaurantType"
-					defaultValue={restaurant?.restaurantType ?? ""}
-					className="rounded-md border px-3 py-2"
-				>
-					<option value="" />
-					{RESTAURANT_TYPES.map((type) => (
-						<option key={type} value={type}>
-							{type}
-						</option>
-					))}
-				</select>
-			</div>
+			{hasCategories ? (
+				<div className="grid gap-1.5">
+					<label htmlFor="categoryId" className="text-sm font-medium">
+						{m.restaurant_type()}
+					</label>
+					<select
+						id="categoryId"
+						name="categoryId"
+						defaultValue={restaurant?.categoryId ?? ""}
+						className="rounded-md border px-3 py-2"
+					>
+						<option value="" />
+						{categories.map((cat) => (
+							<option key={cat.id} value={cat.id}>
+								{cat.name}
+							</option>
+						))}
+					</select>
+				</div>
+			) : (
+				<div className="grid gap-1.5">
+					<label htmlFor="restaurantType" className="text-sm font-medium">
+						{m.restaurant_type()}
+					</label>
+					<select
+						id="restaurantType"
+						name="restaurantType"
+						defaultValue={restaurant?.restaurantType ?? ""}
+						className="rounded-md border px-3 py-2"
+					>
+						<option value="" />
+						{RESTAURANT_TYPES.map((type) => (
+							<option key={type} value={type}>
+								{type}
+							</option>
+						))}
+					</select>
+				</div>
+			)}
 
 			<div className="grid gap-1.5">
 				<label htmlFor="priceRange" className="text-sm font-medium">

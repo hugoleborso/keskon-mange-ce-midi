@@ -9,6 +9,12 @@ import { auth } from "../auth";
 import { db } from "../db";
 import { restaurants } from "../db/schema";
 
+function parseOptionalCoord(value: FormDataEntryValue | null): number | undefined {
+	if (typeof value !== "string" || value === "") return undefined;
+	const num = Number.parseFloat(value);
+	return Number.isFinite(num) ? num : undefined;
+}
+
 export async function createRestaurant(formData: FormData) {
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Non authentifie");
@@ -17,6 +23,7 @@ export async function createRestaurant(formData: FormData) {
 		name: formData.get("name"),
 		address: formData.get("address"),
 		restaurantType: formData.get("restaurantType") || undefined,
+		categoryId: formData.get("categoryId") || undefined,
 		labels: formData.getAll("labels"),
 		priceRange: formData.get("priceRange") || undefined,
 		dineIn: formData.get("dineIn") === "on",
@@ -25,15 +32,29 @@ export async function createRestaurant(formData: FormData) {
 
 	const validated = createRestaurantSchema.parse(raw);
 
-	const geo = await geocodeAddress(validated.address);
-	if (!geo) throw new Error("Adresse introuvable");
+	// Use coordinates from Places API if provided, otherwise geocode
+	const placeLat = parseOptionalCoord(formData.get("latitude"));
+	const placeLng = parseOptionalCoord(formData.get("longitude"));
+
+	let latitude: number;
+	let longitude: number;
+
+	if (placeLat !== undefined && placeLng !== undefined) {
+		latitude = placeLat;
+		longitude = placeLng;
+	} else {
+		const geo = await geocodeAddress(validated.address);
+		if (!geo) throw new Error("Adresse introuvable");
+		latitude = geo.latitude;
+		longitude = geo.longitude;
+	}
 
 	const [restaurant] = await db
 		.insert(restaurants)
 		.values({
 			...validated,
-			latitude: geo.latitude,
-			longitude: geo.longitude,
+			latitude,
+			longitude,
 			createdBy: session.user.id,
 		})
 		.returning({ id: restaurants.id });
@@ -51,6 +72,7 @@ export async function updateRestaurant(formData: FormData) {
 		name: formData.get("name"),
 		address: formData.get("address"),
 		restaurantType: formData.get("restaurantType") || undefined,
+		categoryId: formData.get("categoryId") || undefined,
 		labels: formData.getAll("labels"),
 		priceRange: formData.get("priceRange") || undefined,
 		dineIn: formData.get("dineIn") === "on",
@@ -60,15 +82,28 @@ export async function updateRestaurant(formData: FormData) {
 
 	const validated = updateRestaurantSchema.parse(raw);
 
-	const geo = await geocodeAddress(validated.address);
-	if (!geo) throw new Error("Adresse introuvable");
+	const placeLat = parseOptionalCoord(formData.get("latitude"));
+	const placeLng = parseOptionalCoord(formData.get("longitude"));
+
+	let latitude: number;
+	let longitude: number;
+
+	if (placeLat !== undefined && placeLng !== undefined) {
+		latitude = placeLat;
+		longitude = placeLng;
+	} else {
+		const geo = await geocodeAddress(validated.address);
+		if (!geo) throw new Error("Adresse introuvable");
+		latitude = geo.latitude;
+		longitude = geo.longitude;
+	}
 
 	await db
 		.update(restaurants)
 		.set({
 			...validated,
-			latitude: geo.latitude,
-			longitude: geo.longitude,
+			latitude,
+			longitude,
 			updatedAt: new Date(),
 		})
 		.where(eq(restaurants.id, validated.id));

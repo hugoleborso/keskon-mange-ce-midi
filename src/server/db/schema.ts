@@ -20,6 +20,8 @@ export const restaurantStatusEnum = pgEnum("restaurant_status", [
 	"permanently_closed",
 ]);
 
+export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
+
 // ─── Auth.js tables ──────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -30,6 +32,7 @@ export const users = pgTable("users", {
 	email: text("email").unique().notNull(),
 	emailVerified: timestamp("email_verified", { mode: "date" }),
 	image: text("image"),
+	role: userRoleEnum("role").default("user").notNull(),
 });
 
 export const accounts = pgTable(
@@ -72,6 +75,16 @@ export const verificationTokens = pgTable(
 
 // ─── App tables ──────────────────────────────────────────
 
+export const categories = pgTable("categories", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	name: text("name").unique().notNull(),
+	slug: text("slug").unique().notNull(),
+	createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+});
+
 export const restaurants = pgTable("restaurants", {
 	id: text("id")
 		.primaryKey()
@@ -81,6 +94,7 @@ export const restaurants = pgTable("restaurants", {
 	latitude: real("latitude").notNull(),
 	longitude: real("longitude").notNull(),
 	restaurantType: text("restaurant_type"),
+	categoryId: text("category_id").references(() => categories.id),
 	labels: text("labels").array(),
 	priceRange: priceRangeEnum("price_range"),
 	dineIn: boolean("dine_in").default(true).notNull(),
@@ -113,6 +127,21 @@ export const reviews = pgTable(
 		updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 	},
 	(table) => [unique().on(table.restaurantId, table.authorId)],
+);
+
+export const lunchAttendance = pgTable(
+	"lunch_attendance",
+	{
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		restaurantId: text("restaurant_id")
+			.notNull()
+			.references(() => restaurants.id, { onDelete: "cascade" }),
+		date: text("date").notNull(),
+		createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+	},
+	(table) => [primaryKey({ columns: [table.userId, table.date] })],
 );
 
 export const favorites = pgTable(

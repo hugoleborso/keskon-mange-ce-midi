@@ -121,6 +121,16 @@ describe("getRestaurants", () => {
 		await getRestaurants();
 		expect(orderByResult).toHaveBeenCalled();
 	});
+
+	it("accepts categoryId filter", async () => {
+		orderByResult.mockResolvedValueOnce([]);
+
+		await getRestaurants({
+			categoryId: "cat-1",
+		});
+
+		expect(orderByResult).toHaveBeenCalled();
+	});
 });
 
 describe("getRestaurantById", () => {

@@ -22,6 +22,7 @@ export async function getRestaurants(filters?: {
 	dineIn?: boolean;
 	takeAway?: boolean;
 	priceRange?: PriceRange[];
+	categoryId?: string;
 	status?: string;
 }): Promise<RestaurantWithRating[]> {
 	const conditions = [eq(restaurants.status, "active")];
@@ -34,6 +35,9 @@ export async function getRestaurants(filters?: {
 	}
 	if (filters?.priceRange && filters.priceRange.length > 0) {
 		conditions.push(inArray(restaurants.priceRange, filters.priceRange));
+	}
+	if (filters?.categoryId) {
+		conditions.push(eq(restaurants.categoryId, filters.categoryId));
 	}
 
 	const rows = await db

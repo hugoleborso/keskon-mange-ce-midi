@@ -128,6 +128,51 @@ describe("createRestaurant", () => {
 
 		await expect(createRestaurant(makeFormData({ name: "", address: "12 rue" }))).rejects.toThrow();
 	});
+
+	it("uses Places API coordinates when provided", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		mockReturning.mockResolvedValueOnce([{ id: "new-id" }]);
+
+		await createRestaurant(
+			makeFormData({
+				name: "Test Place",
+				address: "123 Test St",
+				latitude: "48.85",
+				longitude: "2.35",
+				dineIn: "on",
+			}),
+		);
+
+		expect(geocodeAddress).not.toHaveBeenCalled();
+		expect(mockInsertValues).toHaveBeenCalledWith(
+			expect.objectContaining({
+				latitude: 48.85,
+				longitude: 2.35,
+			}),
+		);
+	});
+
+	it("ignores invalid coordinate values and falls back to geocoding", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		geocodeAddress.mockResolvedValueOnce({
+			latitude: 48.85,
+			longitude: 2.35,
+			displayName: "Paris",
+		});
+		mockReturning.mockResolvedValueOnce([{ id: "new-id" }]);
+
+		await createRestaurant(
+			makeFormData({
+				name: "Test",
+				address: "12 rue",
+				latitude: "invalid",
+				longitude: "2.35",
+				dineIn: "on",
+			}),
+		);
+
+		expect(geocodeAddress).toHaveBeenCalled();
+	});
 });
 
 describe("updateRestaurant", () => {
@@ -203,5 +248,30 @@ describe("updateRestaurant", () => {
 		await expect(
 			updateRestaurant(makeFormData({ id: "not-a-uuid", name: "Test", address: "12 rue" })),
 		).rejects.toThrow();
+	});
+
+	it("uses Places API coordinates when provided", async () => {
+		const id = "550e8400-e29b-41d4-a716-446655440000";
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		mockUpdateWhere.mockResolvedValueOnce(undefined);
+
+		await updateRestaurant(
+			makeFormData({
+				id,
+				name: "Updated",
+				address: "New Address",
+				latitude: "48.85",
+				longitude: "2.35",
+				takeAway: "on",
+			}),
+		);
+
+		expect(geocodeAddress).not.toHaveBeenCalled();
+		expect(mockUpdateSet).toHaveBeenCalledWith(
+			expect.objectContaining({
+				latitude: 48.85,
+				longitude: 2.35,
+			}),
+		);
 	});
 });

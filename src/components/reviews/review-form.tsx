@@ -12,6 +12,7 @@ const MAX_PHOTOS = 5;
 export function ReviewForm({
 	restaurantId,
 	existingReview,
+	onDone,
 }: {
 	restaurantId: string;
 	existingReview?: {
@@ -20,6 +21,7 @@ export function ReviewForm({
 		comment: string | null;
 		photoUrls: string[] | null;
 	} | null;
+	onDone?: () => void;
 }) {
 	const isEditing = !!existingReview;
 	const [rating, setRating] = useState(existingReview?.rating ?? 0);
@@ -37,6 +39,7 @@ export function ReviewForm({
 			setPhotoUrls([]);
 			formRef.current?.reset();
 		}
+		onDone?.();
 	};
 
 	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

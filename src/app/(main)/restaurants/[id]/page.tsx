@@ -140,9 +140,9 @@ export default async function RestaurantDetailPage({
 
 			<section className="mt-8">
 				<h2 className="mb-4 text-lg font-semibold">{m.review_section_title()}</h2>
-				{session?.user && (
+				{session?.user && !userReview && (
 					<div className="mb-6">
-						<ReviewForm restaurantId={id} existingReview={userReview} />
+						<ReviewForm restaurantId={id} />
 					</div>
 				)}
 				<ReviewList reviews={reviews} currentUserId={session?.user?.id} />

@@ -7,9 +7,11 @@ import * as m from "@/paraglide/messages.js";
 export function AddressAutocomplete({
 	defaultValue,
 	onSelect,
+	onClear,
 }: {
 	defaultValue?: string;
 	onSelect?: (suggestion: PlaceSuggestion) => void;
+	onClear?: () => void;
 }) {
 	const { setQuery, suggestions, isLoading } = usePlacesAutocomplete();
 	const [address, setAddress] = useState(defaultValue ?? "");
@@ -35,6 +37,7 @@ export function AddressAutocomplete({
 					setAddress(e.target.value);
 					setQuery(e.target.value);
 					setShowSuggestions(true);
+					onClear?.();
 				}}
 				onFocus={() => {
 					if (suggestions.length > 0) setShowSuggestions(true);

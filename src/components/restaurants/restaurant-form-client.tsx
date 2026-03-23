@@ -20,12 +20,14 @@ export function RestaurantFormClient({
 	categories?: Category[];
 }) {
 	const hasCategories = categories && categories.length > 0;
+	const isEditing = !!restaurant;
 	const [placeData, setPlaceData] = useState<{
 		name: string;
 		latitude: number;
 		longitude: number;
 	} | null>(null);
 	const nameInputRef = useRef<HTMLInputElement>(null);
+	const isGeocoded = isEditing || placeData !== null;
 
 	const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
 		setPlaceData({
@@ -68,7 +70,11 @@ export function RestaurantFormClient({
 				<label htmlFor="address" className="text-sm font-medium">
 					{m.restaurant_address()}
 				</label>
-				<AddressAutocomplete defaultValue={restaurant?.address} onSelect={handlePlaceSelect} />
+				<AddressAutocomplete
+					defaultValue={restaurant?.address}
+					onSelect={handlePlaceSelect}
+					onClear={() => setPlaceData(null)}
+				/>
 			</div>
 
 			{hasCategories ? (
@@ -158,7 +164,13 @@ export function RestaurantFormClient({
 				</label>
 			</div>
 
-			<SubmitButton className="rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+			{!isGeocoded && (
+				<p className="text-sm text-muted-foreground">{m.restaurant_select_address()}</p>
+			)}
+			<SubmitButton
+				disabled={!isGeocoded}
+				className="rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+			>
 				{m.restaurant_save()}
 			</SubmitButton>
 		</form>

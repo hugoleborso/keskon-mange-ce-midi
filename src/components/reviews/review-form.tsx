@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import * as m from "@/paraglide/messages.js";
-import { createReview, updateReview } from "@/server/actions/reviews";
 import { SubmitButton } from "../ui/submit-button";
 import { StarRating } from "./star-rating";
 
@@ -27,19 +27,49 @@ export function ReviewForm({
 	const [rating, setRating] = useState(existingReview?.rating ?? 0);
 	const [photoUrls, setPhotoUrls] = useState<string[]>(existingReview?.photoUrls ?? []);
 	const [uploading, setUploading] = useState(false);
+	const [submitting, setSubmitting] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const formRef = useRef<HTMLFormElement>(null);
+	const router = useRouter();
 
-	const serverAction = isEditing ? updateReview : createReview;
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		const fd = new FormData(e.currentTarget);
+		const comment = fd.get("comment") as string | null;
 
-	const action = async (formData: FormData) => {
-		await serverAction(formData);
-		if (!isEditing) {
-			setRating(0);
-			setPhotoUrls([]);
-			formRef.current?.reset();
+		setSubmitting(true);
+		try {
+			if (isEditing) {
+				await fetch("/api/reviews", {
+					method: "PATCH",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						id: existingReview.id,
+						rating,
+						comment: comment || undefined,
+						photoUrls,
+					}),
+				});
+			} else {
+				await fetch("/api/reviews", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						restaurantId,
+						rating,
+						comment: comment || undefined,
+						photoUrls,
+					}),
+				});
+				setRating(0);
+				setPhotoUrls([]);
+				formRef.current?.reset();
+			}
+			router.refresh();
+			onDone?.();
+		} finally {
+			setSubmitting(false);
 		}
-		onDone?.();
 	};
 
 	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,16 +108,8 @@ export function ReviewForm({
 	};
 
 	return (
-		<form ref={formRef} action={action} className="space-y-3 rounded-lg border p-4">
+		<form ref={formRef} onSubmit={handleSubmit} className="space-y-3 rounded-lg border p-4">
 			<h3 className="font-semibold">{isEditing ? m.review_edit() : m.review_add()}</h3>
-			{isEditing ? (
-				<input type="hidden" name="id" value={existingReview.id} />
-			) : (
-				<input type="hidden" name="restaurantId" value={restaurantId} />
-			)}
-			{photoUrls.map((url) => (
-				<input key={url} type="hidden" name="photoUrls" value={url} />
-			))}
 			<div>
 				<StarRating value={rating} onChange={setRating} />
 			</div>
@@ -144,7 +166,7 @@ export function ReviewForm({
 			</div>
 
 			<SubmitButton
-				disabled={rating === 0 || uploading}
+				disabled={rating === 0 || uploading || submitting}
 				className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 			>
 				{m.restaurant_save()}

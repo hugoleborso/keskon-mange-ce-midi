@@ -1,11 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import * as m from "@/paraglide/messages.js";
-import { deleteReview } from "@/server/actions/reviews";
 import type { ReviewWithAuthor } from "@/server/queries/reviews";
-import { SubmitButton } from "../ui/submit-button";
 import { ReviewForm } from "./review-form";
 import { ReviewLikeButton } from "./review-like-button";
 import { StarRating } from "./star-rating";
@@ -22,6 +21,15 @@ export function ReviewItem({
 	likeCount: number;
 }) {
 	const [isEditing, setIsEditing] = useState(false);
+	const router = useRouter();
+	const [isPending, startTransition] = useTransition();
+
+	const handleDelete = () => {
+		startTransition(async () => {
+			await fetch(`/api/reviews/${review.id}`, { method: "DELETE" });
+			router.refresh();
+		});
+	};
 
 	if (isEditing) {
 		return (
@@ -59,12 +67,14 @@ export function ReviewItem({
 						>
 							{m.review_edit()}
 						</button>
-						<form action={deleteReview}>
-							<input type="hidden" name="id" value={review.id} />
-							<SubmitButton className="text-xs text-destructive hover:underline">
-								{m.review_delete()}
-							</SubmitButton>
-						</form>
+						<button
+							type="button"
+							disabled={isPending}
+							onClick={handleDelete}
+							className="text-xs text-destructive hover:underline disabled:opacity-50"
+						>
+							{m.review_delete()}
+						</button>
 					</div>
 				)}
 			</div>

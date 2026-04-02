@@ -2,7 +2,6 @@
 
 import { Heart } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
-import { toggleFavorite } from "@/server/actions/favorites";
 
 export function FavoriteButton({
 	restaurantId,
@@ -17,7 +16,11 @@ export function FavoriteButton({
 	const handleToggle = () => {
 		startTransition(async () => {
 			setOptimisticFavorite(!optimisticFavorite);
-			await toggleFavorite(restaurantId);
+			await fetch("/api/favorites", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ restaurantId }),
+			});
 		});
 	};
 

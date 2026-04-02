@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { PlaceSuggestion } from "@/hooks/use-places-autocomplete";
 import { LABELS, PRICE_RANGE_DESCRIPTIONS, PRICE_RANGES, RESTAURANT_TYPES } from "@/lib/constants";
@@ -11,12 +12,10 @@ import { AddressAutocomplete } from "./address-autocomplete";
 type Category = { id: string; name: string };
 
 export function RestaurantFormClient({
-	action,
 	restaurant,
 	categories,
 	selectedCategoryIds = [],
 }: {
-	action: (formData: FormData) => Promise<void>;
 	restaurant?: RestaurantWithRating;
 	categories?: Category[];
 	selectedCategoryIds?: string[];
@@ -29,7 +28,9 @@ export function RestaurantFormClient({
 		longitude: number;
 	} | null>(null);
 	const [nameValue, setNameValue] = useState(restaurant?.name ?? "");
+	const [submitting, setSubmitting] = useState(false);
 	const isGeocoded = isEditing || placeData !== null;
+	const router = useRouter();
 
 	const handlePlaceSelect = (suggestion: PlaceSuggestion) => {
 		setPlaceData({
@@ -42,15 +43,48 @@ export function RestaurantFormClient({
 		}
 	};
 
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		const fd = new FormData(e.currentTarget);
+
+		const body = {
+			name: fd.get("name") as string,
+			address: fd.get("address") as string,
+			restaurantType: (fd.get("restaurantType") as string) || undefined,
+			categoryIds: fd.getAll("categoryIds") as string[],
+			labels: fd.getAll("labels") as string[],
+			priceRange: fd.get("priceRange") as string,
+			dineIn: fd.get("dineIn") === "on",
+			takeAway: fd.get("takeAway") === "on",
+			latitude: placeData?.latitude,
+			longitude: placeData?.longitude,
+			...(isEditing && { status: (fd.get("status") as string) || undefined }),
+		};
+
+		setSubmitting(true);
+		try {
+			const endpoint = isEditing ? `/api/restaurants/${restaurant.id}` : "/api/restaurants";
+			const method = isEditing ? "PATCH" : "POST";
+
+			const res = await fetch(endpoint, {
+				method,
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+
+			if (!res.ok) return;
+
+			const { data } = await res.json();
+			const restaurantId = restaurant?.id ?? data.id;
+			router.push(`/restaurants/${restaurantId}`);
+		} finally {
+			setSubmitting(false);
+		}
+	};
+
 	return (
-		<form action={action} className="grid gap-4">
+		<form onSubmit={handleSubmit} className="grid gap-4">
 			{restaurant && <input type="hidden" name="id" value={restaurant.id} />}
-			{placeData && (
-				<>
-					<input type="hidden" name="latitude" value={placeData.latitude} />
-					<input type="hidden" name="longitude" value={placeData.longitude} />
-				</>
-			)}
 
 			<div className="grid gap-1.5">
 				<label htmlFor="name" className="text-sm font-medium">
@@ -170,7 +204,7 @@ export function RestaurantFormClient({
 				<p className="text-sm text-muted-foreground">{m.restaurant_select_address()}</p>
 			)}
 			<SubmitButton
-				disabled={!isGeocoded}
+				disabled={!isGeocoded || submitting}
 				className="rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 			>
 				{m.restaurant_save()}

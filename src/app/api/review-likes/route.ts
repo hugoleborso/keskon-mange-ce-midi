@@ -5,10 +5,40 @@ import { ZodError, z } from "zod";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { reviewLikes, reviews } from "@/server/db/schema";
+import { getReviewLikeCounts, getUserReviewLikes } from "@/server/queries/review-likes";
+import { getReviewsByRestaurant } from "@/server/queries/reviews";
 
 const toggleReviewLikeSchema = z.object({
 	reviewId: z.string().uuid(),
 });
+
+export async function GET(request: NextRequest) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+	}
+
+	const { searchParams } = new URL(request.url);
+	const restaurantId = searchParams.get("restaurantId");
+	if (!restaurantId) {
+		return NextResponse.json({ error: "restaurantId requis" }, { status: 400 });
+	}
+
+	const restaurantReviews = await getReviewsByRestaurant(restaurantId);
+	const reviewIds = restaurantReviews.map((r) => r.id);
+
+	const [countsMap, likesSet] = await Promise.all([
+		getReviewLikeCounts(reviewIds),
+		getUserReviewLikes(session.user.id, reviewIds),
+	]);
+
+	return NextResponse.json({
+		data: {
+			counts: Object.fromEntries(countsMap),
+			userLikes: Array.from(likesSet),
+		},
+	});
+}
 
 export async function POST(request: NextRequest) {
 	const session = await auth();

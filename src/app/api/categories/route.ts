@@ -6,6 +6,17 @@ import { createCategorySchema, slugify } from "@/lib/validations/category";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { categories, users } from "@/server/db/schema";
+import { getCategories } from "@/server/queries/categories";
+
+export async function GET(_request: NextRequest) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+	}
+
+	const data = await getCategories();
+	return NextResponse.json({ data });
+}
 
 async function requireAdmin() {
 	const session = await auth();

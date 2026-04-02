@@ -1,6 +1,7 @@
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 import "@/lib/openapi"; // call extendZodWithOpenApi
+import { PRICE_RANGES } from "@/lib/constants";
 import { toggleAttendanceSchema } from "@/lib/validations/attendance";
 import { createCategorySchema, updateCategorySchema } from "@/lib/validations/category";
 import { createRestaurantSchema, updateRestaurantSchema } from "@/lib/validations/restaurant";
@@ -38,7 +39,102 @@ const ToggleReviewLikeSchema = registry.register(
 	z.object({ reviewId: z.string().uuid() }).openapi("ToggleReviewLike"),
 );
 
+const RestaurantSchema = registry.register(
+	"Restaurant",
+	z
+		.object({
+			id: z.string().uuid(),
+			name: z.string(),
+			address: z.string(),
+			latitude: z.number(),
+			longitude: z.number(),
+			priceRange: z.enum(PRICE_RANGES).nullable(),
+			dineIn: z.boolean(),
+			takeAway: z.boolean(),
+			status: z.string(),
+			averageRating: z.number().nullable(),
+			reviewsCount: z.number(),
+		})
+		.openapi("Restaurant"),
+);
+
+const CategorySchema = registry.register(
+	"Category",
+	z
+		.object({
+			id: z.string().uuid(),
+			name: z.string(),
+			slug: z.string(),
+		})
+		.openapi("Category"),
+);
+
+const ReviewSchema = registry.register(
+	"Review",
+	z
+		.object({
+			id: z.string().uuid(),
+			restaurantId: z.string().uuid(),
+			rating: z.number(),
+			comment: z.string().nullable(),
+			author: z.object({ name: z.string().nullable(), image: z.string().nullable() }),
+		})
+		.openapi("Review"),
+);
+
+const AttendanceUserSchema = registry.register(
+	"AttendanceUser",
+	z
+		.object({
+			userId: z.string(),
+			name: z.string().nullable(),
+			image: z.string().nullable(),
+		})
+		.openapi("AttendanceUser"),
+);
+
 // --- Paths ---
+
+// GET /api/restaurants
+registry.registerPath({
+	method: "get",
+	path: "/api/restaurants",
+	summary: "List restaurants",
+	tags: ["Restaurants"],
+	request: {
+		query: z.object({
+			dineIn: z.enum(["true", "false"]).optional(),
+			takeAway: z.enum(["true", "false"]).optional(),
+			priceRange: z.array(z.enum(PRICE_RANGES)).optional(),
+			categoryId: z.string().uuid().optional(),
+			status: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			description: "List of restaurants",
+			content: { "application/json": { schema: z.object({ data: z.array(RestaurantSchema) }) } },
+		},
+		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
+	},
+});
+
+// GET /api/restaurants/{id}
+registry.registerPath({
+	method: "get",
+	path: "/api/restaurants/{id}",
+	summary: "Get a restaurant by ID",
+	tags: ["Restaurants"],
+	request: { params: z.object({ id: z.string().uuid() }) },
+	responses: {
+		200: {
+			description: "Restaurant",
+			content: { "application/json": { schema: z.object({ data: RestaurantSchema }) } },
+		},
+		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
+		404: { description: "Not found", content: { "application/json": { schema: ErrorSchema } } },
+	},
+});
 
 // POST /api/restaurants
 registry.registerPath({
@@ -77,6 +173,28 @@ registry.registerPath({
 		},
 		400: {
 			description: "Validation error",
+			content: { "application/json": { schema: ErrorSchema } },
+		},
+		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
+	},
+});
+
+// GET /api/reviews
+registry.registerPath({
+	method: "get",
+	path: "/api/reviews",
+	summary: "List reviews for a restaurant",
+	tags: ["Reviews"],
+	request: {
+		query: z.object({ restaurantId: z.string().uuid() }),
+	},
+	responses: {
+		200: {
+			description: "List of reviews",
+			content: { "application/json": { schema: z.object({ data: z.array(ReviewSchema) }) } },
+		},
+		400: {
+			description: "Missing restaurantId",
 			content: { "application/json": { schema: ErrorSchema } },
 		},
 		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
@@ -161,6 +279,36 @@ registry.registerPath({
 	},
 });
 
+// GET /api/attendance
+registry.registerPath({
+	method: "get",
+	path: "/api/attendance",
+	summary: "Get attendance for a restaurant on a given date",
+	tags: ["Attendance"],
+	request: {
+		query: z.object({
+			restaurantId: z.string().uuid(),
+			date: z
+				.string()
+				.optional()
+				.openapi({ description: "Date in YYYY-MM-DD format. Defaults to today." }),
+		}),
+	},
+	responses: {
+		200: {
+			description: "Attendance list",
+			content: {
+				"application/json": { schema: z.object({ data: z.array(AttendanceUserSchema) }) },
+			},
+		},
+		400: {
+			description: "Missing restaurantId",
+			content: { "application/json": { schema: ErrorSchema } },
+		},
+		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
+	},
+});
+
 // POST /api/attendance
 registry.registerPath({
 	method: "post",
@@ -172,6 +320,23 @@ registry.registerPath({
 		200: {
 			description: "Toggled",
 			content: { "application/json": { schema: z.object({ data: z.null() }) } },
+		},
+		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
+	},
+});
+
+// GET /api/favorites
+registry.registerPath({
+	method: "get",
+	path: "/api/favorites",
+	summary: "Get current user's favorite restaurant IDs",
+	tags: ["Favorites"],
+	responses: {
+		200: {
+			description: "List of favorite restaurant IDs",
+			content: {
+				"application/json": { schema: z.object({ data: z.array(z.string().uuid()) }) },
+			},
 		},
 		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
 	},
@@ -192,6 +357,38 @@ registry.registerPath({
 			},
 		},
 		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
+	},
+});
+
+// GET /api/categories
+registry.registerPath({
+	method: "get",
+	path: "/api/categories",
+	summary: "List all categories",
+	tags: ["Categories"],
+	responses: {
+		200: {
+			description: "List of categories",
+			content: { "application/json": { schema: z.object({ data: z.array(CategorySchema) }) } },
+		},
+		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
+	},
+});
+
+// GET /api/categories/{id}
+registry.registerPath({
+	method: "get",
+	path: "/api/categories/{id}",
+	summary: "Get a category by ID",
+	tags: ["Categories"],
+	request: { params: z.object({ id: z.string().uuid() }) },
+	responses: {
+		200: {
+			description: "Category",
+			content: { "application/json": { schema: z.object({ data: CategorySchema }) } },
+		},
+		401: { description: "Unauthorized", content: { "application/json": { schema: ErrorSchema } } },
+		404: { description: "Not found", content: { "application/json": { schema: ErrorSchema } } },
 	},
 });
 

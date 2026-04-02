@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/server/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/server/queries/reviews", () => ({
+	getReviewsByRestaurant: vi.fn(),
+}));
 
 const mockInsertValues = vi.fn();
 const mockUpdateWhere = vi.fn();
@@ -25,10 +28,13 @@ vi.mock("@/server/db/schema", () => ({
 
 type MockFn = ReturnType<typeof vi.fn>;
 
-const { POST, PATCH } = await import("./route");
+const { GET, POST, PATCH } = await import("./route");
 const { auth } = (await import("@/server/auth")) as unknown as { auth: MockFn };
 const { revalidatePath } = (await import("next/cache")) as unknown as {
 	revalidatePath: MockFn;
+};
+const { getReviewsByRestaurant } = (await import("@/server/queries/reviews")) as unknown as {
+	getReviewsByRestaurant: MockFn;
 };
 
 const validUuid = "550e8400-e29b-41d4-a716-446655440000";
@@ -146,5 +152,41 @@ describe("PATCH /api/reviews", () => {
 			expect.objectContaining({ rating: 5, comment: "Updated" }),
 		);
 		expect(revalidatePath).toHaveBeenCalledWith(`/restaurants/${validRestaurantId}`);
+	});
+});
+
+describe("GET /api/reviews", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("returns 401 when not authenticated", async () => {
+		auth.mockResolvedValueOnce(null);
+		const res = await GET(
+			new Request(
+				"http://localhost/api/reviews?restaurantId=550e8400-e29b-41d4-a716-446655440000",
+			) as unknown as NextRequest,
+		);
+		expect(res.status).toBe(401);
+	});
+
+	it("returns 400 when restaurantId is missing", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		const res = await GET(new Request("http://localhost/api/reviews") as unknown as NextRequest);
+		expect(res.status).toBe(400);
+	});
+
+	it("returns reviews on success", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getReviewsByRestaurant.mockResolvedValueOnce([{ id: "rev-1", rating: 5 }]);
+
+		const res = await GET(
+			new Request(
+				`http://localhost/api/reviews?restaurantId=${validRestaurantId}`,
+			) as unknown as NextRequest,
+		);
+
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.data).toEqual([{ id: "rev-1", rating: 5 }]);
+		expect(getReviewsByRestaurant).toHaveBeenCalledWith(validRestaurantId);
 	});
 });

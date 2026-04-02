@@ -1,11 +1,37 @@
 import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
+import type { PriceRange } from "@/lib/constants";
 import { geocodeAddress } from "@/lib/geocoding";
 import { createRestaurantSchema } from "@/lib/validations/restaurant";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { restaurantCategories, restaurants } from "@/server/db/schema";
+import { getRestaurants } from "@/server/queries/restaurants";
+
+export async function GET(request: NextRequest) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+	}
+
+	const { searchParams } = new URL(request.url);
+	const dineIn = searchParams.get("dineIn");
+	const takeAway = searchParams.get("takeAway");
+	const priceRange = searchParams.getAll("priceRange");
+	const categoryId = searchParams.get("categoryId");
+	const status = searchParams.get("status");
+
+	const data = await getRestaurants({
+		dineIn: dineIn !== null ? dineIn === "true" : undefined,
+		takeAway: takeAway !== null ? takeAway === "true" : undefined,
+		priceRange: priceRange.length > 0 ? (priceRange as PriceRange[]) : undefined,
+		categoryId: categoryId ?? undefined,
+		status: status ?? undefined,
+	});
+
+	return NextResponse.json({ data });
+}
 
 export async function POST(request: NextRequest) {
 	const session = await auth();

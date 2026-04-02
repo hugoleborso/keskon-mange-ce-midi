@@ -22,4 +22,15 @@ describe("generateOpenAPISpec", () => {
 		expect(paths).toContain("/api/categories");
 		expect(paths).toContain("/api/categories/{id}");
 	});
+
+	it("includes GET methods for query endpoints", () => {
+		const spec = generateOpenAPISpec();
+		expect(spec.paths["/api/restaurants"]).toHaveProperty("get");
+		expect(spec.paths["/api/restaurants/{id}"]).toHaveProperty("get");
+		expect(spec.paths["/api/reviews"]).toHaveProperty("get");
+		expect(spec.paths["/api/categories"]).toHaveProperty("get");
+		expect(spec.paths["/api/categories/{id}"]).toHaveProperty("get");
+		expect(spec.paths["/api/attendance"]).toHaveProperty("get");
+		expect(spec.paths["/api/favorites"]).toHaveProperty("get");
+	});
 });

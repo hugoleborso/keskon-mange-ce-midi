@@ -5,6 +5,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/server/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/server/queries/attendance", () => ({
 	getTodayDateString: vi.fn(() => "2026-03-23"),
+	getRestaurantAttendance: vi.fn(),
 }));
 
 const mockInsertValues = vi.fn();
@@ -30,10 +31,13 @@ vi.mock("@/server/db/schema", () => ({
 
 type MockFn = ReturnType<typeof vi.fn>;
 
-const { POST } = await import("./route");
+const { GET, POST } = await import("./route");
 const { auth } = (await import("@/server/auth")) as unknown as { auth: MockFn };
 const { revalidatePath } = (await import("next/cache")) as unknown as {
 	revalidatePath: MockFn;
+};
+const { getRestaurantAttendance } = (await import("@/server/queries/attendance")) as unknown as {
+	getRestaurantAttendance: MockFn;
 };
 
 const validRestaurantId = "550e8400-e29b-41d4-a716-446655440000";
@@ -100,5 +104,54 @@ describe("POST /api/attendance", () => {
 		expect(res.status).toBe(200);
 		expect(mockUpdateSet).toHaveBeenCalledWith({ restaurantId: validRestaurantId });
 		expect(revalidatePath).toHaveBeenCalledWith("/");
+	});
+});
+
+describe("GET /api/attendance", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("returns 401 when not authenticated", async () => {
+		auth.mockResolvedValueOnce(null);
+		const res = await GET(
+			new Request(
+				`http://localhost/api/attendance?restaurantId=${validRestaurantId}`,
+			) as unknown as NextRequest,
+		);
+		expect(res.status).toBe(401);
+	});
+
+	it("returns 400 when restaurantId is missing", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		const res = await GET(new Request("http://localhost/api/attendance") as unknown as NextRequest);
+		expect(res.status).toBe(400);
+	});
+
+	it("returns attendance list on success", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getRestaurantAttendance.mockResolvedValueOnce([{ userId: "u1", name: "Alice", image: null }]);
+
+		const res = await GET(
+			new Request(
+				`http://localhost/api/attendance?restaurantId=${validRestaurantId}`,
+			) as unknown as NextRequest,
+		);
+
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.data).toEqual([{ userId: "u1", name: "Alice", image: null }]);
+		expect(getRestaurantAttendance).toHaveBeenCalledWith(validRestaurantId, "2026-03-23");
+	});
+
+	it("uses provided date param", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getRestaurantAttendance.mockResolvedValueOnce([]);
+
+		await GET(
+			new Request(
+				`http://localhost/api/attendance?restaurantId=${validRestaurantId}&date=2026-04-01`,
+			) as unknown as NextRequest,
+		);
+
+		expect(getRestaurantAttendance).toHaveBeenCalledWith(validRestaurantId, "2026-04-01");
 	});
 });

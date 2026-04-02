@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/server/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/server/queries/favorites", () => ({
+	getUserFavorites: vi.fn(),
+}));
 
 const mockInsertValues = vi.fn();
 const mockDeleteWhere = vi.fn();
@@ -24,10 +27,13 @@ vi.mock("@/server/db/schema", () => ({
 
 type MockFn = ReturnType<typeof vi.fn>;
 
-const { POST } = await import("./route");
+const { GET, POST } = await import("./route");
 const { auth } = (await import("@/server/auth")) as unknown as { auth: MockFn };
 const { revalidatePath } = (await import("next/cache")) as unknown as {
 	revalidatePath: MockFn;
+};
+const { getUserFavorites } = (await import("@/server/queries/favorites")) as unknown as {
+	getUserFavorites: MockFn;
 };
 
 const validRestaurantId = "550e8400-e29b-41d4-a716-446655440000";
@@ -82,5 +88,27 @@ describe("POST /api/favorites", () => {
 		expect(mockDeleteWhere).toHaveBeenCalled();
 		expect(revalidatePath).toHaveBeenCalledWith("/");
 		expect(revalidatePath).toHaveBeenCalledWith("/favorites");
+	});
+});
+
+describe("GET /api/favorites", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("returns 401 when not authenticated", async () => {
+		auth.mockResolvedValueOnce(null);
+		const res = await GET(new Request("http://localhost/api/favorites") as unknown as NextRequest);
+		expect(res.status).toBe(401);
+	});
+
+	it("returns favorite restaurant IDs on success", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getUserFavorites.mockResolvedValueOnce(["r-1", "r-2"]);
+
+		const res = await GET(new Request("http://localhost/api/favorites") as unknown as NextRequest);
+
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.data).toEqual(["r-1", "r-2"]);
+		expect(getUserFavorites).toHaveBeenCalledWith("user-1");
 	});
 });

@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/server/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/geocoding", () => ({ geocodeAddress: vi.fn() }));
+vi.mock("@/server/queries/restaurants", () => ({
+	getRestaurantById: vi.fn(),
+}));
 
 const mockInsertValues = vi.fn();
 const mockUpdateWhere = vi.fn();
@@ -25,13 +28,16 @@ vi.mock("@/server/db/schema", () => ({
 
 type MockFn = ReturnType<typeof vi.fn>;
 
-const { PATCH } = await import("./route");
+const { GET, PATCH } = await import("./route");
 const { auth } = (await import("@/server/auth")) as unknown as { auth: MockFn };
 const { geocodeAddress } = (await import("@/lib/geocoding")) as unknown as {
 	geocodeAddress: MockFn;
 };
 const { revalidatePath } = (await import("next/cache")) as unknown as {
 	revalidatePath: MockFn;
+};
+const { getRestaurantById } = (await import("@/server/queries/restaurants")) as unknown as {
+	getRestaurantById: MockFn;
 };
 
 const validId = "550e8400-e29b-41d4-a716-446655440000";
@@ -156,5 +162,38 @@ describe("PATCH /api/restaurants/[id]", () => {
 		expect(res.status).toBe(200);
 		expect(mockDeleteWhere).toHaveBeenCalled();
 		expect(mockInsertValues).toHaveBeenCalled();
+	});
+});
+
+function makeGetRequest(): NextRequest {
+	return new Request(`http://localhost/api/restaurants/${validId}`) as unknown as NextRequest;
+}
+
+describe("GET /api/restaurants/[id]", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("returns 401 when not authenticated", async () => {
+		auth.mockResolvedValueOnce(null);
+		const res = await GET(makeGetRequest(), makeParams(validId));
+		expect(res.status).toBe(401);
+	});
+
+	it("returns 404 when restaurant not found", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getRestaurantById.mockResolvedValueOnce(null);
+
+		const res = await GET(makeGetRequest(), makeParams(validId));
+		expect(res.status).toBe(404);
+	});
+
+	it("returns restaurant on success", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getRestaurantById.mockResolvedValueOnce({ id: validId, name: "Chez Luigi" });
+
+		const res = await GET(makeGetRequest(), makeParams(validId));
+
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.data).toEqual({ id: validId, name: "Chez Luigi" });
 	});
 });

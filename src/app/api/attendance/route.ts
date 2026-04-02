@@ -6,7 +6,24 @@ import { toggleAttendanceSchema } from "@/lib/validations/attendance";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { lunchAttendance } from "@/server/db/schema";
-import { getTodayDateString } from "@/server/queries/attendance";
+import { getRestaurantAttendance, getTodayDateString } from "@/server/queries/attendance";
+
+export async function GET(request: NextRequest) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+	}
+
+	const { searchParams } = new URL(request.url);
+	const restaurantId = searchParams.get("restaurantId");
+	if (!restaurantId) {
+		return NextResponse.json({ error: "restaurantId requis" }, { status: 400 });
+	}
+
+	const date = searchParams.get("date") ?? getTodayDateString();
+	const data = await getRestaurantAttendance(restaurantId, date);
+	return NextResponse.json({ data });
+}
 
 export async function POST(request: NextRequest) {
 	const session = await auth();

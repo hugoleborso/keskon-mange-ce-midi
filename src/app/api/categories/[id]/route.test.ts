@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/server/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/server/queries/categories", () => ({
+	getCategoryById: vi.fn(),
+}));
 
 const mockInsertValues = vi.fn();
 const mockUpdateWhere = vi.fn();
@@ -29,10 +32,13 @@ vi.mock("@/server/db/schema", () => ({
 
 type MockFn = ReturnType<typeof vi.fn>;
 
-const { PATCH, DELETE } = await import("./route");
+const { GET, PATCH, DELETE } = await import("./route");
 const { auth } = (await import("@/server/auth")) as unknown as { auth: MockFn };
 const { revalidatePath } = (await import("next/cache")) as unknown as {
 	revalidatePath: MockFn;
+};
+const { getCategoryById } = (await import("@/server/queries/categories")) as unknown as {
+	getCategoryById: MockFn;
 };
 
 const validUuid = "550e8400-e29b-41d4-a716-446655440000";
@@ -103,5 +109,34 @@ describe("DELETE /api/categories/[id]", () => {
 		expect(mockDeleteWhere).toHaveBeenCalledTimes(2);
 		expect(revalidatePath).toHaveBeenCalledWith("/admin/categories");
 		expect(revalidatePath).toHaveBeenCalledWith("/");
+	});
+});
+
+describe("GET /api/categories/[id]", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("returns 401 when not authenticated", async () => {
+		auth.mockResolvedValueOnce(null);
+		const res = await GET(makeRequest({}), makeParams(validUuid));
+		expect(res.status).toBe(401);
+	});
+
+	it("returns 404 when category not found", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getCategoryById.mockResolvedValueOnce(null);
+
+		const res = await GET(makeRequest({}), makeParams(validUuid));
+		expect(res.status).toBe(404);
+	});
+
+	it("returns category on success", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getCategoryById.mockResolvedValueOnce({ id: validUuid, name: "Italien" });
+
+		const res = await GET(makeRequest({}), makeParams(validUuid));
+
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.data).toEqual({ id: validUuid, name: "Italien" });
 	});
 });

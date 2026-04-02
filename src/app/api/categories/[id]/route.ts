@@ -6,6 +6,22 @@ import { slugify, updateCategorySchema } from "@/lib/validations/category";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { categories, restaurantCategories, users } from "@/server/db/schema";
+import { getCategoryById } from "@/server/queries/categories";
+
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+	}
+
+	const { id } = await params;
+	const data = await getCategoryById(id);
+	if (!data) {
+		return NextResponse.json({ error: "Categorie introuvable" }, { status: 404 });
+	}
+
+	return NextResponse.json({ data });
+}
 
 async function requireAdmin() {
 	const session = await auth();

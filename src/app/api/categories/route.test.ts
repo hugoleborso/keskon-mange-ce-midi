@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/server/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/server/queries/categories", () => ({
+	getCategories: vi.fn(),
+}));
 
 const mockInsertValues = vi.fn();
 const mockSelectLimit = vi.fn();
@@ -23,10 +26,13 @@ vi.mock("@/server/db/schema", () => ({
 
 type MockFn = ReturnType<typeof vi.fn>;
 
-const { POST } = await import("./route");
+const { GET, POST } = await import("./route");
 const { auth } = (await import("@/server/auth")) as unknown as { auth: MockFn };
 const { revalidatePath } = (await import("next/cache")) as unknown as {
 	revalidatePath: MockFn;
+};
+const { getCategories } = (await import("@/server/queries/categories")) as unknown as {
+	getCategories: MockFn;
 };
 
 function makeRequest(body: unknown): NextRequest {
@@ -80,5 +86,26 @@ describe("POST /api/categories", () => {
 		);
 		expect(revalidatePath).toHaveBeenCalledWith("/admin/categories");
 		expect(revalidatePath).toHaveBeenCalledWith("/");
+	});
+});
+
+describe("GET /api/categories", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("returns 401 when not authenticated", async () => {
+		auth.mockResolvedValueOnce(null);
+		const res = await GET(new Request("http://localhost/api/categories") as unknown as NextRequest);
+		expect(res.status).toBe(401);
+	});
+
+	it("returns categories on success", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getCategories.mockResolvedValueOnce([{ id: "cat-1", name: "Italien" }]);
+
+		const res = await GET(new Request("http://localhost/api/categories") as unknown as NextRequest);
+
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.data).toEqual([{ id: "cat-1", name: "Italien" }]);
 	});
 });

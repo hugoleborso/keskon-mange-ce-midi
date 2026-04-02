@@ -5,10 +5,21 @@ import { ZodError, z } from "zod";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { favorites } from "@/server/db/schema";
+import { getUserFavorites } from "@/server/queries/favorites";
 
 const toggleFavoriteSchema = z.object({
 	restaurantId: z.string().uuid(),
 });
+
+export async function GET(_request: NextRequest) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+	}
+
+	const data = await getUserFavorites(session.user.id);
+	return NextResponse.json({ data });
+}
 
 export async function POST(request: NextRequest) {
 	const session = await auth();

@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/server/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/geocoding", () => ({ geocodeAddress: vi.fn() }));
+vi.mock("@/server/queries/restaurants", () => ({
+	getRestaurants: vi.fn(),
+}));
 
 const mockReturning = vi.fn();
 const mockInsertValues = vi.fn(() => {
@@ -27,13 +30,16 @@ vi.mock("@/server/db/schema", () => ({
 
 type MockFn = ReturnType<typeof vi.fn>;
 
-const { POST } = await import("./route");
+const { GET, POST } = await import("./route");
 const { auth } = (await import("@/server/auth")) as unknown as { auth: MockFn };
 const { geocodeAddress } = (await import("@/lib/geocoding")) as unknown as {
 	geocodeAddress: MockFn;
 };
 const { revalidatePath } = (await import("next/cache")) as unknown as {
 	revalidatePath: MockFn;
+};
+const { getRestaurants } = (await import("@/server/queries/restaurants")) as unknown as {
+	getRestaurants: MockFn;
 };
 
 function makeRequest(body: unknown): NextRequest {
@@ -140,5 +146,45 @@ describe("POST /api/restaurants", () => {
 
 		expect(res.status).toBe(201);
 		expect(mockInsertValues).toHaveBeenCalledTimes(2);
+	});
+});
+
+function makeGetRequest(search = ""): NextRequest {
+	return new Request(`http://localhost/api/restaurants${search}`) as unknown as NextRequest;
+}
+
+describe("GET /api/restaurants", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("returns 401 when not authenticated", async () => {
+		auth.mockResolvedValueOnce(null);
+		const res = await GET(makeGetRequest());
+		expect(res.status).toBe(401);
+	});
+
+	it("returns list of restaurants on success", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getRestaurants.mockResolvedValueOnce([{ id: "r-1", name: "Chez Luigi" }]);
+
+		const res = await GET(makeGetRequest());
+
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body.data).toEqual([{ id: "r-1", name: "Chez Luigi" }]);
+	});
+
+	it("passes filters from query params", async () => {
+		auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+		getRestaurants.mockResolvedValueOnce([]);
+
+		await GET(makeGetRequest("?dineIn=true&priceRange=EUR_1&priceRange=EUR_2&categoryId=cat-uuid"));
+
+		expect(getRestaurants).toHaveBeenCalledWith(
+			expect.objectContaining({
+				dineIn: true,
+				priceRange: ["EUR_1", "EUR_2"],
+				categoryId: "cat-uuid",
+			}),
+		);
 	});
 });

@@ -2,34 +2,27 @@ import Link from "next/link";
 import { AttendanceButton } from "@/components/attendance/attendance-button";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { RestaurantCard } from "@/components/restaurants/restaurant-card";
+import { serverFetch } from "@/lib/server-fetch";
 import * as m from "@/paraglide/messages.js";
 import { auth } from "@/server/auth";
-import {
-	getAllAttendanceForDate,
-	getTodayDateString,
-	getUserAttendance,
-} from "@/server/queries/attendance";
-import { getUserFavoriteRestaurants } from "@/server/queries/favorites";
+import type { AttendanceUser } from "@/server/queries/attendance";
+import type { RestaurantWithRating } from "@/server/queries/restaurants";
 
 export default async function FavoritesPage() {
 	const session = await auth();
 	if (!session?.user?.id) return null;
 
-	const today = getTodayDateString();
-
-	const [restaurants, attendanceMap, userAttendingId] = await Promise.all([
-		getUserFavoriteRestaurants(session.user.id),
-		getAllAttendanceForDate(today),
-		getUserAttendance(session.user.id, today),
+	const [favRes, attAllRes, attMeRes] = await Promise.all([
+		serverFetch("/api/favorites/restaurants"),
+		serverFetch("/api/attendance/all"),
+		serverFetch("/api/attendance/me"),
 	]);
 
-	const attendanceData: Record<
-		string,
-		{ userId: string; name: string | null; image: string | null }[]
-	> = {};
-	for (const [restaurantId, users] of attendanceMap) {
-		attendanceData[restaurantId] = users;
-	}
+	const { data: restaurants } = (await favRes.json()) as { data: RestaurantWithRating[] };
+	const { data: attendanceData } = (await attAllRes.json()) as {
+		data: Record<string, AttendanceUser[]>;
+	};
+	const { data: userAttendingId } = (await attMeRes.json()) as { data: string | null };
 
 	return (
 		<main className="mx-auto max-w-2xl p-4">

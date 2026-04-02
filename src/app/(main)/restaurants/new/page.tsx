@@ -1,9 +1,12 @@
 import { RestaurantFormClient } from "@/components/restaurants/restaurant-form-client";
+import { serverFetch } from "@/lib/server-fetch";
 import * as m from "@/paraglide/messages.js";
-import { getCategories } from "@/server/queries/categories";
 
 export default async function NewRestaurantPage() {
-	const categories = await getCategories();
+	const res = await serverFetch("/api/categories");
+	const { data: categories } = (await res.json()) as {
+		data: { id: string; name: string; slug: string }[];
+	};
 
 	return (
 		<main className="mx-auto max-w-lg p-4">

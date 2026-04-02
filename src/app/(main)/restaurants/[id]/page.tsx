@@ -6,16 +6,12 @@ import { NavigateButton } from "@/components/restaurants/navigate-button";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { ReviewList } from "@/components/reviews/review-list";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
+import { serverFetch } from "@/lib/server-fetch";
 import * as m from "@/paraglide/messages.js";
 import { auth } from "@/server/auth";
-import {
-	getRestaurantAttendance,
-	getTodayDateString,
-	getUserAttendance,
-} from "@/server/queries/attendance";
-import { getRestaurantById } from "@/server/queries/restaurants";
-import { getReviewLikeCounts, getUserReviewLikes } from "@/server/queries/review-likes";
-import { getReviewsByRestaurant, getUserReview } from "@/server/queries/reviews";
+import type { AttendanceUser } from "@/server/queries/attendance";
+import type { RestaurantWithRating } from "@/server/queries/restaurants";
+import type { ReviewWithAuthor } from "@/server/queries/reviews";
 
 export default async function RestaurantDetailPage({
 	params,
@@ -23,24 +19,33 @@ export default async function RestaurantDetailPage({
 	params: Promise<{ id: string }>;
 }) {
 	const { id } = await params;
-	const [restaurant, session] = await Promise.all([getRestaurantById(id), auth()]);
-
-	if (!restaurant) notFound();
-
-	const today = getTodayDateString();
-
-	const [reviews, userReview, attendees, userAttendingId] = await Promise.all([
-		getReviewsByRestaurant(id),
-		session?.user?.id ? getUserReview(id, session.user.id) : null,
-		getRestaurantAttendance(id, today),
-		session?.user?.id ? getUserAttendance(session.user.id, today) : null,
+	const [restaurantRes, session] = await Promise.all([
+		serverFetch(`/api/restaurants/${id}`),
+		auth(),
 	]);
 
-	const reviewIds = reviews.map((r) => r.id);
-	const [likeCounts, userLikes] = await Promise.all([
-		getReviewLikeCounts(reviewIds),
-		session?.user?.id ? getUserReviewLikes(session.user.id, reviewIds) : new Set<string>(),
+	if (!restaurantRes.ok) notFound();
+
+	const { data: restaurant } = (await restaurantRes.json()) as { data: RestaurantWithRating };
+
+	const [reviewsRes, reviewLikesRes, attendeesRes, attMeRes, userReviewRes] = await Promise.all([
+		serverFetch(`/api/reviews?restaurantId=${id}`),
+		serverFetch(`/api/review-likes?restaurantId=${id}`),
+		serverFetch(`/api/attendance?restaurantId=${id}`),
+		serverFetch("/api/attendance/me"),
+		serverFetch(`/api/reviews/me?restaurantId=${id}`),
 	]);
+
+	const { data: reviews } = (await reviewsRes.json()) as { data: ReviewWithAuthor[] };
+	const { data: likesData } = (await reviewLikesRes.json()) as {
+		data: { counts: Record<string, number>; userLikes: string[] };
+	};
+	const { data: attendees } = (await attendeesRes.json()) as { data: AttendanceUser[] };
+	const { data: userAttendingId } = (await attMeRes.json()) as { data: string | null };
+	const { data: userReview } = (await userReviewRes.json()) as { data: unknown };
+
+	const likeCounts = new Map(Object.entries(likesData.counts));
+	const userLikes = new Set(likesData.userLikes);
 
 	// Collect all photos from reviews for a gallery
 	const allPhotos = reviews.flatMap((r) => r.photoUrls ?? []);

@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { AdminCategoriesClient } from "@/components/categories/admin-categories-client";
+import { serverFetch } from "@/lib/server-fetch";
 import * as m from "@/paraglide/messages.js";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { users } from "@/server/db/schema";
-import { getCategories } from "@/server/queries/categories";
 
 export default async function AdminCategoriesPage() {
 	const session = await auth();
@@ -19,7 +19,10 @@ export default async function AdminCategoriesPage() {
 
 	if (!user || user.role !== "admin") redirect("/");
 
-	const categories = await getCategories();
+	const res = await serverFetch("/api/categories");
+	const { data: categories } = (await res.json()) as {
+		data: { id: string; name: string; slug: string }[];
+	};
 
 	return (
 		<main className="mx-auto max-w-2xl p-4">

@@ -4,16 +4,11 @@ import { RestaurantMap } from "@/components/map/restaurant-map";
 import { DrawContainer } from "@/components/random-draw/draw-container";
 import { RestaurantList } from "@/components/restaurants/restaurant-list";
 import { parsePriceRange } from "@/lib/parse-filters";
+import { serverFetch } from "@/lib/server-fetch";
 import * as m from "@/paraglide/messages.js";
 import { auth } from "@/server/auth";
-import {
-	getAllAttendanceForDate,
-	getTodayDateString,
-	getUserAttendance,
-} from "@/server/queries/attendance";
-import { getCategories } from "@/server/queries/categories";
-import { getUserFavorites } from "@/server/queries/favorites";
-import { getRestaurants } from "@/server/queries/restaurants";
+import type { AttendanceUser } from "@/server/queries/attendance";
+import type { RestaurantWithRating } from "@/server/queries/restaurants";
 
 export default async function HomePage({
 	searchParams,
@@ -29,33 +24,36 @@ export default async function HomePage({
 		categoryId: typeof params.categoryId === "string" ? params.categoryId : undefined,
 	};
 
-	const today = getTodayDateString();
+	const qs = new URLSearchParams();
+	if (filters.dineIn !== undefined) qs.set("dineIn", String(filters.dineIn));
+	if (filters.takeAway !== undefined) qs.set("takeAway", String(filters.takeAway));
+	for (const p of filters.priceRange ?? []) qs.append("priceRange", p);
+	if (filters.categoryId) qs.set("categoryId", filters.categoryId);
 
-	const [restaurants, session, categories, attendanceMap] = await Promise.all([
-		getRestaurants({
-			dineIn: filters.dineIn,
-			takeAway: filters.takeAway,
-			priceRange: filters.priceRange.length > 0 ? filters.priceRange : undefined,
-			categoryId: filters.categoryId || undefined,
-		}),
+	const [restaurantsRes, session, categoriesRes] = await Promise.all([
+		serverFetch(`/api/restaurants?${qs}`),
 		auth(),
-		getCategories(),
-		getAllAttendanceForDate(today),
+		serverFetch("/api/categories"),
 	]);
 
-	const [favoriteIds, userAttendingId] = await Promise.all([
-		session?.user?.id ? getUserFavorites(session.user.id) : [],
-		session?.user?.id ? getUserAttendance(session.user.id, today) : null,
+	const { data: restaurants } = (await restaurantsRes.json()) as {
+		data: RestaurantWithRating[];
+	};
+	const { data: categories } = (await categoriesRes.json()) as {
+		data: { id: string; name: string; slug: string }[];
+	};
+
+	const [attAllRes, favRes, attMeRes] = await Promise.all([
+		serverFetch("/api/attendance/all"),
+		serverFetch("/api/favorites"),
+		serverFetch("/api/attendance/me"),
 	]);
 
-	// Convert Map to a plain object for serialization
-	const attendanceData: Record<
-		string,
-		{ userId: string; name: string | null; image: string | null }[]
-	> = {};
-	for (const [restaurantId, users] of attendanceMap) {
-		attendanceData[restaurantId] = users;
-	}
+	const { data: attendanceData } = (await attAllRes.json()) as {
+		data: Record<string, AttendanceUser[]>;
+	};
+	const { data: favoriteIds } = (await favRes.json()) as { data: string[] };
+	const { data: userAttendingId } = (await attMeRes.json()) as { data: string | null };
 
 	return (
 		<main className="flex h-[calc(100vh-57px)] flex-col lg:flex-row">

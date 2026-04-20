@@ -8,7 +8,7 @@ import { db } from "@/server/db";
 import { users } from "@/server/db/schema";
 import { SubmitButton } from "../ui/submit-button";
 
-const backgroundColor = "blue";
+const backgroundColor = "red";
 
 export async function Header() {
 	const session = await auth();

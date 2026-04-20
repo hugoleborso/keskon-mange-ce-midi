@@ -15,14 +15,40 @@ regenerated during dev, and every request fails with
 directory only exists because some earlier run produced it; the project
 is effectively relying on stale generated output.
 
-Paraglide 2.13.x ships plugins for: **webpack, vite, rollup, rolldown,
-rspack, esbuild**. It does **not** ship a Turbopack plugin (Turbopack
-has no public bundler-plugin API at the time of writing).
+Paraglide 2.13.x ships plugins for **webpack, vite, rollup, rolldown,
+rspack, esbuild**. It does **not** ship a Turbopack plugin. Turbopack
+has no public bundler-plugin API at the time of writing, so no
+Turbopack-targeting plugin can exist for Paraglide (or anything else).
 
 We need a fix that:
 1. Regenerates `src/paraglide/` reliably whenever messages change.
 2. Works for all developers on `pnpm dev`, CI, and `pnpm build`.
 3. Doesn't silently break again when someone deletes the output dir.
+
+## What does Turbopack actually buy this project?
+
+At today's scale (146 source files, 68 messages, no heavy compute):
+
+| | Turbopack | Webpack |
+|---|---|---|
+| Cold `next dev` start | ~3-6 s | ~8-15 s |
+| HMR on a single-file edit | ~100-300 ms | ~500 ms-2 s |
+
+Savings per edit: a few hundred milliseconds. Savings per restart: 5-10
+seconds. Nice, not load-bearing — this codebase is nowhere near the
+scale where Turbopack becomes a productivity unlock.
+
+Against that, Turbopack's costs here are concrete and recurring:
+1. **Breaks every webpack plugin** the project needs, silently. This is
+   the bug we just hit with Paraglide.
+2. **Dev/prod divergence**: `next build` still uses webpack, so dev
+   behavior doesn't match prod behavior. Entire classes of bugs only
+   show up after deploy.
+3. **Empty plugin ecosystem**: future needs (MDX, bundle analyzer,
+   sourcemap tweaks, custom loaders) will all hit the same wall.
+4. **Beta-tier stability**: expect sporadic warnings and edge cases
+   (we already see the Google Fonts fetch behave differently under
+   Turbopack in offline/sandbox environments).
 
 ## Options
 
@@ -33,41 +59,47 @@ Change `package.json`:
 - "dev": "next dev --turbopack",
 + "dev": "next dev",
 ```
-Existing webpack plugin continues to fire at every request. `pnpm build`
-already uses webpack, so nothing changes for prod.
+Existing webpack plugin fires; `src/paraglide/` regenerates automatically
+whenever a request compiles the import graph. `pnpm build` already uses
+webpack, so prod behavior is unchanged and dev now matches prod.
 
 ### B — Keep Turbopack, run the Paraglide CLI alongside Next
 
-Use the Paraglide CLI directly, outside any bundler plugin. Concretely:
 ```json
 "scripts": {
   "paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
   "predev": "pnpm paraglide:compile",
   "prebuild": "pnpm paraglide:compile",
-  "dev": "concurrently \"paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --watch\" \"next dev --turbopack\""
+  "dev": "concurrently \"paraglide-js compile ... --watch\" \"next dev --turbopack\""
 }
 ```
-The `--watch` flag is already supported by the CLI. Remove the webpack
-plugin from `next.config.ts` once the CLI path is canonical.
+CLI output matches the plugin output byte-for-byte. `--watch` is
+supported.
+
+**But**: editing a message causes the CLI to rewrite files that
+`@/paraglide/messages.js` re-exports. Turbopack detects the change, but
+because those files are module-level `export const … = …`, Fast Refresh
+can't preserve component state — you get a full-page reload for every
+message edit. The "keep Turbopack for fast HMR" argument mostly
+evaporates as soon as you're actually editing translations. You also
+pay the two-process overhead (Ctrl-C handling, interleaved logs, CI
+script complexity) forever.
 
 ### C — Switch to a different Paraglide bundler plugin
 
 The `paraglide-js` package exports vite / rspack / rollup / esbuild
-plugins. None of them are loaded by Turbopack either (Turbopack only
-recognizes its own plugin API, which isn't public yet). This option
-therefore only makes sense **together with** a bundler switch, which
-for a Next.js app means either:
-- C1. Use `rspack` by migrating off Next, or
-- C2. Wait for an official `@inlang/paraglide-next` adapter that's
-  Turbopack-aware (none exists today; the package name is currently
-  just a wrapper around the bundler plugins).
+plugins. None are loaded by Turbopack. Viable only via a bundler
+migration:
+- C1. Use `rspack` by migrating off Next — out of proportion.
+- C2. Wait for an official `@inlang/paraglide-next` Turbopack adapter —
+  doesn't exist today; no ETA.
 
 Listed for completeness; not a near-term path.
 
 ### D — Do nothing
 
-Keep relying on the stale `src/paraglide/` directory. First developer to
-`git clean -fdx` or set up a fresh machine is blocked.
+Keep relying on the stale `src/paraglide/` directory. First `git clean`
+or fresh clone breaks dev. Already bit us once.
 
 ## Evaluation
 
@@ -75,56 +107,52 @@ Scored 1 (worst) → 5 (best) on each axis.
 
 | Option | Performance | DevX | Bundle size | Community size |
 |---|---|---|---|---|
-| **A** Drop `--turbopack` | 2 — slower HMR / cold start than Turbopack on large codebases, but fine at current project size | 5 — one-line change, works immediately, identical behavior in dev and prod (both webpack) | 5 — no change | 5 — webpack + Next.js is the default for most apps in production; huge community |
-| **B** CLI + `predev`/`--watch` | 5 — Turbopack speed preserved; CLI compile is O(ms) for 68 messages, watcher cost is negligible | 3 — adds `concurrently` + two extra scripts; two processes in the terminal; devs must remember the watcher if they edit `messages/*.json` | 5 — no change (the CLI emits exactly the same output as the plugin) | 4 — Paraglide CLI is first-party and stable; `concurrently` is ubiquitous |
-| **C1** Migrate off Next | 5 — potentially faster | 1 — a full framework migration for an i18n concern is absurdly out of proportion | ≈ — depends entirely on new stack | 3 — Vite/Rspack communities smaller than Next, but still large |
-| **C2** Wait for Turbopack-native plugin | n/a | 1 — blocks indefinitely, no ETA | n/a | n/a — doesn't exist |
+| **A** Drop `--turbopack` | 3 — loses a few hundred ms of HMR and 5-10 s of cold start. Fine at current scale. | 5 — one-line change, dev matches prod, every Next/webpack plugin just works | 5 — identical output | 5 — Next on webpack is the long-default path; massive community |
+| **B** CLI + `predev`/`--watch` | 3 — Turbopack speed for app-code edits preserved, but message edits force full-page reloads (Fast Refresh breaks on regenerated modules), and cold start pays the CLI compile twice (predev + first-watch) | 2 — two processes, concurrency dep, split logs, messier Ctrl-C and CI, hidden failure modes when the watcher dies silently | 5 — same output | 4 — CLI is first-party; `concurrently` ubiquitous |
+| **C1** Migrate off Next | 5 | 1 — framework migration for an i18n concern | ≈ | 3 |
+| **C2** Wait for Turbopack plugin | n/a | 1 — indefinite block | n/a | n/a |
 | **D** Do nothing | 5 (until it breaks) | 1 — hidden landmine | 5 | n/a |
 
 ## Decision
 
-Two viable candidates: **A** and **B**. Recommend **B** (CLI + `predev`
-+ concurrent `--watch`). Rationale:
+**Option A: drop `--turbopack` from the `dev` script.**
 
-- **Turbopack matters more as the app grows.** The project already uses
-  React 19, Leaflet, Drizzle, nuqs, and a Paraglide bundle — cold-dev
-  times will diverge between webpack and Turbopack. Giving that up
-  permanently to dodge a 10-line script is short-sighted.
-- **Option A only postpones the problem.** Vercel has signaled that
-  Turbopack will become the default for `next build` too; when that
-  happens, the webpack plugin stops firing in prod and we'd have to
-  migrate anyway.
-- **Option B's DevX cost is small and localised.** `concurrently` is a
-  single well-known dependency, the watcher is hands-off, and the
-  `predev`/`prebuild` scripts make `src/paraglide/` self-healing — the
-  exact property that would have prevented today's bug.
-- **Bundle size identical.** The CLI's output is byte-for-byte what the
-  webpack plugin produces. No runtime impact either way.
+Rationale:
+- **Cost/benefit is lopsided.** Turbopack gains here are measured in
+  hundreds of milliseconds; costs are concrete ecosystem gaps that
+  already produced one production bug. Wrong trade for a 150-file app.
+- **Dev/prod parity.** `next build` uses webpack today. Matching dev to
+  prod eliminates an entire class of "works on my machine" bugs.
+- **Re-evaluate when Turbopack ships a public plugin API** (so the
+  Paraglide plugin can target it) or when the codebase grows to the
+  point where webpack's cold start measurably hurts onboarding. Neither
+  threshold is close.
+- **Option B is a workaround, not a fix.** It preserves Turbopack on
+  paper but surrenders Fast Refresh for the exact workflow (editing
+  messages) that i18n tooling needs to support well, while adding a
+  second dev process and a new dependency. Net negative.
 
-If the team prefers to minimize moving parts and accept slower dev for
-now, fall back to **A** — it's cheap to reverse.
-
-Either choice requires updating `project.inlang/settings.json` so the
-`modules` entries point to locally-resolvable paths instead of
-`cdn.jsdelivr.net` URLs, for reproducible offline builds and CI.
+Independently of this decision, `project.inlang/settings.json` should
+stop fetching plugins from `cdn.jsdelivr.net` at compile time. Pin them
+locally so compile is reproducible offline and on CI that's firewalled
+from the public CDN.
 
 ## Consequences
 
-### If B is adopted
-- `pnpm dev` spawns two processes (Next + Paraglide watcher); Ctrl-C
-  must kill both (handled by `concurrently`).
-- New devs need `pnpm install` to pull `concurrently`.
-- `next.config.ts` loses the `webpack` hook — one fewer source of
-  mystery build errors.
-- Fresh clones (`pnpm install && pnpm dev`) just work, no hidden
-  "must have run build once" precondition.
-
-### If A is adopted
-- Slower dev startup/HMR on cold caches; users may notice once the
-  codebase grows.
-- A future Next release that makes Turbopack mandatory forces a second
-  migration.
+### If A is adopted (recommended)
+- `pnpm dev` cold start ~5-10 s slower; HMR a few hundred ms slower.
+  Still well under the "annoying" threshold at current size.
+- `src/paraglide/` regenerates via the webpack plugin on demand —
+  self-healing, no extra scripts.
+- Dev and prod use the same bundler; bug classes converge.
 - Zero new dependencies.
+- Trivially reversible when Turbopack is ready (flip the flag back).
+
+### If B is adopted (not recommended)
+- Message edits lose Fast Refresh → full-page reload per save.
+- New `concurrently` dependency, dual-process dev loop.
+- CI scripts must coordinate the watcher.
+- Retains 5-10 s cold-start / ~few-hundred-ms HMR on code edits.
 
 ## References
 
@@ -132,5 +160,5 @@ Either choice requires updating `project.inlang/settings.json` so the
   by `next dev --turbopack` when `next.config.ts` has a `webpack(...)`
   hook.
 - Paraglide CLI: `paraglide-js compile --watch` (2.13.2).
-- `node_modules/@inlang/paraglide-js/dist/bundler-plugins/index.d.ts`
-  — enumerates supported bundlers (no Turbopack).
+- `node_modules/@inlang/paraglide-js/dist/bundler-plugins/index.d.ts` —
+  enumerates supported bundlers (no Turbopack).

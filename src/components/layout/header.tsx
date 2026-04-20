@@ -8,6 +8,8 @@ import { db } from "@/server/db";
 import { users } from "@/server/db/schema";
 import { SubmitButton } from "../ui/submit-button";
 
+const backgroundColor = "blue";
+
 export async function Header() {
 	const session = await auth();
 
@@ -24,7 +26,10 @@ export async function Header() {
 	}
 
 	return (
-		<header className="flex items-center justify-between border-b px-4 py-3">
+		<header
+			className="flex items-center justify-between border-b px-4 py-3"
+			style={{ backgroundColor }}
+		>
 			<Link href="/" className="text-lg font-bold">
 				{m.app_title()}
 			</Link>

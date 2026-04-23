@@ -25,7 +25,7 @@ export default function LoginPage() {
 							`${productionUrl}/api/auth/preview-login?returnTo=${encodeURIComponent(previewOrigin)}`,
 						);
 					}
-					await signIn("google");
+					await signIn("google", { redirectTo: "/" });
 				}}
 			>
 				<SubmitButton className="rounded-lg bg-white px-8 py-3 font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50">

@@ -13,6 +13,7 @@ vi.mock("@/server/db", () => ({
 vi.mock("@/server/db/schema", () => ({
 	users: {},
 	restaurants: {},
+	reviews: {},
 	favorites: {},
 }));
 
@@ -47,8 +48,8 @@ describe("GET /api/auth/test-login", () => {
 
 		const res = await GET(makeRequest());
 
-		// Seeds user + restaurant + favorite.
-		expect(mockOnConflictDoNothing).toHaveBeenCalledTimes(3);
+		// Seeds user + restaurant + favorite + a badly-rated restaurant + its review + its favorite.
+		expect(mockOnConflictDoNothing).toHaveBeenCalledTimes(6);
 		// Redirects to the favorites page.
 		expect(res.status).toBe(307);
 		expect(res.headers.get("location")).toContain("/favorites");

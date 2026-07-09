@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { encode } from "next-auth/jwt";
 import { db } from "@/server/db";
-import { favorites, restaurants, users } from "@/server/db/schema";
+import { favorites, restaurants, reviews, users } from "@/server/db/schema";
 
 // Fixed IDs so repeated test runs stay idempotent (no duplicated rows).
 const TEST_USER_ID = "e2e-user";
 const TEST_USER_EMAIL = "e2e@test.local";
 const TEST_RESTAURANT_ID = "e2e-restaurant";
+// A deliberately badly-rated restaurant to exercise the "beurk 🤮" badge.
+const TEST_BAD_RESTAURANT_ID = "e2e-restaurant-bad";
+const TEST_BAD_REVIEW_ID = "e2e-review-bad";
 
 // Auth.js stores the JWT session in this cookie over http (localhost).
 // Over https it would be prefixed with `__Secure-`.
@@ -50,6 +53,36 @@ export async function GET(request: Request) {
 	await db
 		.insert(favorites)
 		.values({ userId: TEST_USER_ID, restaurantId: TEST_RESTAURANT_ID })
+		.onConflictDoNothing();
+
+	// A second favorite that is badly rated (1 star) so the "beurk 🤮" badge shows.
+	await db
+		.insert(restaurants)
+		.values({
+			id: TEST_BAD_RESTAURANT_ID,
+			name: "Le Cafard Grognon (E2E)",
+			address: "2 rue du Test, 75000 Paris",
+			latitude: 48.8566,
+			longitude: 2.3522,
+			status: "active",
+			createdBy: TEST_USER_ID,
+		})
+		.onConflictDoNothing();
+
+	await db
+		.insert(reviews)
+		.values({
+			id: TEST_BAD_REVIEW_ID,
+			restaurantId: TEST_BAD_RESTAURANT_ID,
+			authorId: TEST_USER_ID,
+			rating: 1,
+			comment: "Immangeable.",
+		})
+		.onConflictDoNothing();
+
+	await db
+		.insert(favorites)
+		.values({ userId: TEST_USER_ID, restaurantId: TEST_BAD_RESTAURANT_ID })
 		.onConflictDoNothing();
 
 	// 2. Mint the session cookie exactly as Auth.js would after a real login.

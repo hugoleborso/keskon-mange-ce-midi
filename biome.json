@@ -57,7 +57,9 @@
 			"!src/paraglide",
 			"!project.inlang",
 			"!coverage",
-			"!.vercel"
+			"!.vercel",
+			"!test-results",
+			"!playwright-report"
 		]
 	}
 }

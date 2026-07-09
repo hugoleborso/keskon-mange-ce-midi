@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
+import { isBeurk } from "@/lib/restaurant-rating";
 import * as m from "@/paraglide/messages.js";
 import type { RestaurantWithRating } from "@/server/queries/restaurants";
 import { NavigateButton } from "./navigate-button";
@@ -40,6 +41,11 @@ export function RestaurantCard({
 							? `⭐ ${restaurant.averageRating?.toFixed(1)} · ${m.restaurant_reviews({ count: restaurant.reviewsCount })}`
 							: m.restaurant_no_reviews()}
 					</span>
+					{isBeurk(restaurant.averageRating, restaurant.reviewsCount) && (
+						<span className="rounded-md bg-red-100 px-2 py-0.5 font-medium text-red-700">
+							{m.restaurant_beurk_badge()}
+						</span>
+					)}
 				</div>
 			</Link>
 			<div className="mt-3 flex items-center gap-2 border-t pt-3">

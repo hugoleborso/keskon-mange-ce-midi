@@ -23,6 +23,7 @@
 	"restaurant_created_by": "Ajouté par {name}",
 	"restaurant_reviews": "{count} avis",
 	"restaurant_no_reviews": "Aucun avis",
+	"restaurant_beurk_badge": "beurk 🤮",
 	"restaurant_not_found": "Restaurant introuvable",
 	"restaurant_back_to_list": "Retour à la liste",
 	"restaurant_gallery": "Photos",

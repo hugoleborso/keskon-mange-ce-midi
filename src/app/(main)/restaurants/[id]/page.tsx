@@ -6,6 +6,7 @@ import { NavigateButton } from "@/components/restaurants/navigate-button";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { ReviewList } from "@/components/reviews/review-list";
 import { PRICE_RANGE_LABELS } from "@/lib/constants";
+import { isBeurk } from "@/lib/restaurant-rating";
 import { serverFetch } from "@/lib/server-fetch";
 import * as m from "@/paraglide/messages.js";
 import { auth } from "@/server/auth";
@@ -116,10 +117,17 @@ export default async function RestaurantDetailPage({
 				</div>
 			)}
 
-			<div className="mt-4 text-sm text-muted-foreground">
-				{restaurant.reviewsCount > 0
-					? `⭐ ${restaurant.averageRating?.toFixed(1)} · ${m.restaurant_reviews({ count: restaurant.reviewsCount })}`
-					: m.restaurant_no_reviews()}
+			<div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+				<span>
+					{restaurant.reviewsCount > 0
+						? `⭐ ${restaurant.averageRating?.toFixed(1)} · ${m.restaurant_reviews({ count: restaurant.reviewsCount })}`
+						: m.restaurant_no_reviews()}
+				</span>
+				{isBeurk(restaurant.averageRating, restaurant.reviewsCount) && (
+					<span className="rounded-md bg-red-100 px-2 py-0.5 font-medium text-red-700">
+						{m.restaurant_beurk_badge()}
+					</span>
+				)}
 			</div>
 
 			{restaurant.latitude && restaurant.longitude && (

@@ -138,6 +138,25 @@ pnpm db:studio   # Visual browser
 
 Deploy to Vercel with a Neon PostgreSQL database. See [docs/setup-guide.md](docs/setup-guide.md) for full instructions.
 
+## Metabase for Vulgatech
+
+The Vulgatech database session explores the production data through a throwaway Metabase on AWS. The deck links point to `https://d3ntob2958279t.cloudfront.net`, which the deploy script re-points to the new instance.
+
+```bash
+aws sso login --profile hugobo-theodo --use-device-code   # approve in Safari: the page hangs in Chrome
+bash scripts/metabase/deploy.sh                           # EC2 + Metabase, prints the instance URL
+```
+
+The instance deletes itself at 17:00 UTC (19:00 Paris). Override with `SHUTDOWN_UTC=20:00` for a later session.
+
+Once Metabase answers (about 3 minutes), create the admin account in its UI without adding a database, then:
+
+```bash
+python3 scripts/metabase/connect_db.py http://<instance-dns>   # connects Neon (.env.prod), creates the cohort account
+```
+
+Keep the Sample Database: the last exercise uses it. After the session, disable the CloudFront distribution `EQQY1TB1OOV3P` and delete the `vulgatech-metabase` security group.
+
 ## License
 
 Private project.
